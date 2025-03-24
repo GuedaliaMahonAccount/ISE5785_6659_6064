@@ -29,6 +29,7 @@ public final class Main {
    /** A vector for tests to (1,2,2) */
    private static final Vector V4          = new Vector(1, 2, 2);
 
+
    /**
     * Main program to tests initial functionality of the 1st stage
     * @param args irrelevant here

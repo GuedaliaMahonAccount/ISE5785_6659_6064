@@ -5,7 +5,7 @@ package primitives;
  * Each point has three coordinates (x, y, z) represented by Double3.
  */
 public class Point {
-    final Double3 xyz;
+    protected final Double3 xyz;
 
     /** Static constant representing the origin (0,0,0) */
     public static final Point ZERO = new Point(0, 0, 0);
@@ -33,8 +33,11 @@ public class Point {
     /** Calculates the squared distance between two points */
     public double distanceSquared(Point other) {
         Double3 d = this.xyz.subtract(other.xyz);
-        return d.d1 * d.d1 + d.d2 * d.d2 + d.d3 * d.d3;
+        return d.d1() * d.d1() + d.d2() * d.d2() + d.d3() * d.d3();
     }
+
+
+
 
     /** Calculates the distance between two points */
     public double distance(Point other) {
@@ -43,8 +46,11 @@ public class Point {
 
     @Override
     public boolean equals(Object obj) {
-        return this == obj || (obj instanceof Point other && this.xyz.equals(other.xyz));
+        if (this == obj) return true;
+        return (obj instanceof Point other) && this.xyz.equals(other.xyz);
     }
+
+
 
     @Override
     public String toString() {

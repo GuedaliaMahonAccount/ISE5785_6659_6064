@@ -38,13 +38,13 @@ public class Vector {
     public double dotProduct(Vector other) {
         Double3 a = this.xyz;
         Double3 b = other.xyz;
-        return a.d1 * b.d1 + a.d2 * b.d2 + a.d3 * b.d3;
+        return a.d1() * b.d1() + a.d2() * b.d2() + a.d3() * b.d3();
     }
 
     /** Cross product of this vector with another */
     public Vector crossProduct(Vector other) {
-        double x1 = this.xyz.d1, y1 = this.xyz.d2, z1 = this.xyz.d3;
-        double x2 = other.xyz.d1, y2 = other.xyz.d2, z2 = other.xyz.d3;
+        double x1 = this.xyz.d1(), y1 = this.xyz.d2(), z1 = this.xyz.d3();
+        double x2 = other.xyz.d1(), y2 = other.xyz.d2(), z2 = other.xyz.d3();
 
         return new Vector(
                 y1 * z2 - z1 * y2,
@@ -56,7 +56,7 @@ public class Vector {
     /** Returns the squared length of the vector */
     public double lengthSquared() {
         Double3 d = this.xyz;
-        return d.d1 * d.d1 + d.d2 * d.d2 + d.d3 * d.d3;
+        return d.d1() * d.d1() + d.d2() * d.d2() + d.d3() * d.d3();
     }
 
     /** Returns the length (magnitude) of the vector */
