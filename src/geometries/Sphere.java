@@ -3,16 +3,28 @@ package geometries;
 import primitives.*;
 
 /**
- * Sphere class represents a sphere defined by a center and radius.
+ * The {@code Sphere} class represents a sphere in 3D space.
+ * It is defined by a center point and a radius.
  */
 public class Sphere extends RadialGeometry {
     private final Point center;
 
+    /**
+     * Constructs a sphere with a given radius and center.
+     *
+     * @param radius the radius of the sphere
+     * @param center the center point of the sphere
+     */
     public Sphere(double radius, Point center) {
         super(radius);
         this.center = center;
     }
 
+    /**
+     * Returns the center point of the sphere.
+     *
+     * @return the center
+     */
     public Point getCenter() {
         return center;
     }

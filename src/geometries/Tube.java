@@ -3,16 +3,28 @@ package geometries;
 import primitives.*;
 
 /**
- * Tube class represents a cylinder without caps (open-ended).
+ * The {@code Tube} class represents an infinite cylinder (without caps).
+ * It is defined by a central axis (as a {@link Ray}) and a radius.
  */
 public class Tube extends RadialGeometry {
     private final Ray axisRay;
 
+    /**
+     * Constructs a tube with a given radius and axis ray.
+     *
+     * @param radius  the radius of the tube
+     * @param axisRay the central axis of the tube
+     */
     public Tube(double radius, Ray axisRay) {
         super(radius);
         this.axisRay = axisRay;
     }
 
+    /**
+     * Returns the central axis ray of the tube.
+     *
+     * @return the axis ray
+     */
     public Ray getAxisRay() {
         return axisRay;
     }

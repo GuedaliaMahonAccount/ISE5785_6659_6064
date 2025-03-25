@@ -1,22 +1,39 @@
 package primitives;
 
 /**
- * Ray class represents a ray in 3D space defined by a point and a direction vector.
+ * The {@code Ray} class represents a ray in 3D space.
+ * A ray is defined by a starting point and a direction vector.
  */
 public class Ray {
     private final Point p0;
     private final Vector dir;
 
-    /** Constructor that ensures the direction is normalized */
+    /**
+     * Constructs a ray with a given point and direction.
+     * The direction is normalized automatically.
+     *
+     * @param p0  the starting point of the ray
+     * @param dir the direction vector of the ray
+     */
     public Ray(Point p0, Vector dir) {
         this.p0 = p0;
-        this.dir = dir.normalize(); // Always store as normalized vector
+        this.dir = dir.normalize();
     }
 
+    /**
+     * Returns the starting point of the ray.
+     *
+     * @return the point p0
+     */
     public Point getP0() {
         return p0;
     }
 
+    /**
+     * Returns the normalized direction vector of the ray.
+     *
+     * @return the direction vector
+     */
     public Vector getDir() {
         return dir;
     }
