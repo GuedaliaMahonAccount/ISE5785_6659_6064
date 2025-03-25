@@ -7,7 +7,9 @@ import primitives.*;
  * It is defined either by three points or by a point and a normal vector.
  */
 public class Plane extends Geometry {
+    /** A point on the plane. */
     private final Point q0;
+    /** The normal vector to the plane. */
     private final Vector normal;
 
     /**

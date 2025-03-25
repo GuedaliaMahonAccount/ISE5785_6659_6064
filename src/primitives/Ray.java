@@ -5,7 +5,9 @@ package primitives;
  * A ray is defined by a starting point and a direction vector.
  */
 public class Ray {
+    /** The starting point of the ray. */
     private final Point p0;
+    /** The normalized direction vector of the ray. */
     private final Vector dir;
 
     /**

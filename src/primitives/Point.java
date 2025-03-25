@@ -5,6 +5,7 @@ package primitives;
  * A point is defined by three double values (x, y, z) encapsulated in a {@link Double3}.
  */
 public class Point {
+    /** The coordinates of the point. */
     protected final Double3 xyz;
 
     /** Static constant representing the origin (0, 0, 0). */

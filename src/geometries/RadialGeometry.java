@@ -4,6 +4,7 @@ package geometries;
  * Abstract class for geometries that have a radius.
  */
 public abstract class RadialGeometry extends Geometry {
+    /** The radius of the geometry. */
     protected final double radius;
 
     /**

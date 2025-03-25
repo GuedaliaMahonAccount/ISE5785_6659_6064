@@ -7,6 +7,7 @@ import primitives.*;
  * It is defined by a center point and a radius.
  */
 public class Sphere extends RadialGeometry {
+    /** The center point of the sphere. */
     private final Point center;
 
     /**

@@ -7,6 +7,9 @@ import primitives.*;
  * and a finite height. It extends the {@link Tube} class by adding a height property.
  */
 public class Cylinder extends Tube {
+    /**
+     * The height of the cylinder.
+     */
     private final double height;
 
     /**

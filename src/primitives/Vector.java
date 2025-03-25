@@ -5,6 +5,9 @@ package primitives;
  * Vectors are immutable and cannot be the zero vector.
  */
 public class Vector {
+    /**
+     * The x, y, and z components of the vector.
+     */
     final Double3 xyz;
 
     /**

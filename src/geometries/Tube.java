@@ -7,6 +7,9 @@ import primitives.*;
  * It is defined by a central axis (as a {@link Ray}) and a radius.
  */
 public class Tube extends RadialGeometry {
+    /**
+     * The central axis of the tube.
+     */
     private final Ray axisRay;
 
     /**
