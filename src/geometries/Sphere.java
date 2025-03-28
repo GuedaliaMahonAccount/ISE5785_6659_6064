@@ -18,8 +18,15 @@ public class Sphere extends RadialGeometry {
      */
     public Sphere(double radius, Point center) {
         super(radius);
+        if (radius <= 0) {
+            throw new IllegalArgumentException("Radius must be positive");
+        }
+        if (center == null) {
+            throw new IllegalArgumentException("Center point cannot be null");
+        }
         this.center = center;
     }
+
 
     /**
      * Returns the center point of the sphere.
@@ -32,8 +39,13 @@ public class Sphere extends RadialGeometry {
 
     @Override
     public Vector getNormal(Point point) {
+        double distance = point.distance(center);
+        if (Math.abs(distance - radius) > 1e-10) {
+            throw new IllegalArgumentException("Point is not on the surface of the sphere");
+        }
         return point.subtract(center).normalize();
     }
+
 
     @Override
     public String toString() {
