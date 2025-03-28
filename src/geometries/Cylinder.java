@@ -21,8 +21,18 @@ public class Cylinder extends Tube {
      */
     public Cylinder(double radius, Ray axisRay, double height) {
         super(radius, axisRay);
+        if (radius <= 0) {
+            throw new IllegalArgumentException("Radius must be positive");
+        }
+        if (height <= 0) {
+            throw new IllegalArgumentException("Height must be positive");
+        }
+        if (axisRay == null) {
+            throw new IllegalArgumentException("Axis ray cannot be null");
+        }
         this.height = height;
     }
+
 
     /**
      * Returns the height of the cylinder.
@@ -37,4 +47,6 @@ public class Cylinder extends Tube {
     public String toString() {
         return "Cylinder{" + getAxisRay() + ", r=" + getRadius() + ", h=" + height + "}";
     }
+
+
 }

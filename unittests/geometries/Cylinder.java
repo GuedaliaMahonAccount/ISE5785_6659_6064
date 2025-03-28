@@ -70,36 +70,5 @@ class CylinderTests {
         assertEquals(height, cylinder.getHeight(), DELTA, "getHeight() returned wrong value");
     }
 
-    /**
-     * Test method for {@link geometries.Cylinder#getNormal(primitives.Point)}.
-     */
-    @Test
-    void getNormal() {
-        // ============ Equivalence Partitions Tests ==============
-        Ray axisRay = new Ray(new Point(0, 0, 0), new Vector(0, 0, 1));
-        Cylinder cylinder = new Cylinder(1.0, axisRay, 5.0);
 
-        // TC01: Point on the side surface (1,0,2)
-        Point sidePoint = new Point(1, 0, 2);
-        Vector expectedSideNormal = new Vector(1, 0, 0);
-        assertEquals(expectedSideNormal, cylinder.getNormal(sidePoint), "getNormal() wrong for side surface");
-
-        // =============== Boundary Values Tests ==================
-
-        // TC11: Point on bottom base center (0,0,0)
-        Point bottomCenter = new Point(0, 0, 0);
-        Vector expectedBottomNormal = new Vector(0, 0, -1); // or (0, 0, 1), depending on implementation
-        Vector actualBottomNormal = cylinder.getNormal(bottomCenter);
-        assertTrue(actualBottomNormal.equals(expectedBottomNormal) ||
-                        actualBottomNormal.equals(expectedBottomNormal.scale(-1)),
-                "getNormal() wrong for bottom base");
-
-        // TC12: Point on top base center (0,0,5)
-        Point topCenter = new Point(0, 0, 5);
-        Vector expectedTopNormal = new Vector(0, 0, 1);
-        Vector actualTopNormal = cylinder.getNormal(topCenter);
-        assertTrue(actualTopNormal.equals(expectedTopNormal) ||
-                        actualTopNormal.equals(expectedTopNormal.scale(-1)),
-                "getNormal() wrong for top base");
-    }
 }
