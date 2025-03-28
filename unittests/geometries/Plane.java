@@ -11,29 +11,68 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PlaneTests {
 
+    private static final double DELTA = 1e-10;
+
+    /**
+     * Test method for {@link geometries.Plane#Plane(Point, Point, Point)}.
+     */
+    @Test
+    void testConstructor() {
+        // ============ Equivalence Partitions Tests ==============
+
+        // TC01: Valid plane with 3 non-colinear points
+        assertDoesNotThrow(() -> new Plane(
+                        new Point(0, 0, 1),
+                        new Point(1, 0, 0),
+                        new Point(0, 1, 0)),
+                "Failed constructing a correct plane");
+
+        // TC02: Colinear points
+        assertThrows(IllegalArgumentException.class, () -> new Plane(
+                        new Point(0, 0, 0),
+                        new Point(1, 1, 1),
+                        new Point(2, 2, 2)),
+                "Constructed a plane from colinear points");
+
+        // =============== Boundary Values Tests ==================
+
+        // TC10: Two identical points
+        assertThrows(IllegalArgumentException.class, () -> new Plane(
+                        new Point(0, 0, 1),
+                        new Point(0, 0, 1),
+                        new Point(1, 1, 1)),
+                "Constructed a plane with duplicated points");
+
+        // TC11: All points identical
+        assertThrows(IllegalArgumentException.class, () -> new Plane(
+                        new Point(1, 1, 1),
+                        new Point(1, 1, 1),
+                        new Point(1, 1, 1)),
+                "Constructed a plane with all points the same");
+    }
+
     /**
      * Test method for {@link geometries.Plane#getNormal()}.
      */
     @Test
     void getNormal() {
         // ============ Equivalence Partitions Tests ==============
-        // TC01: Create a plane from 3 non-colinear points
+        // TC01: Normal should be orthogonal to the plane and of unit length
         Point p1 = new Point(0, 0, 1);
         Point p2 = new Point(1, 0, 0);
         Point p3 = new Point(0, 1, 0);
         Plane plane = new Plane(p1, p2, p3);
 
-        // Expected normal (orthogonal to both vectors p2-p1 and p3-p1)
         Vector normal = plane.getNormal();
 
-        // Check that the normal is unit length
-        assertEquals(1, normal.length(), 1e-10, "Normal is not normalized");
+        // Check unit length
+        assertEquals(1, normal.length(), DELTA, "Normal is not normalized");
 
-        // Check that the normal is orthogonal to the plane vectors
+        // Check orthogonality to both edges
         Vector v1 = p2.subtract(p1);
         Vector v2 = p3.subtract(p1);
-        assertEquals(0, normal.dotProduct(v1), 1e-10, "Normal is not orthogonal to vector 1");
-        assertEquals(0, normal.dotProduct(v2), 1e-10, "Normal is not orthogonal to vector 2");
+        assertEquals(0, normal.dotProduct(v1), DELTA, "Normal is not orthogonal to vector 1");
+        assertEquals(0, normal.dotProduct(v2), DELTA, "Normal is not orthogonal to vector 2");
     }
 
     /**
@@ -42,7 +81,7 @@ class PlaneTests {
     @Test
     void getQ0() {
         // ============ Equivalence Partitions Tests ==============
-        // TC01: Get Q0 after creating the plane
+        // TC01: Get Q0 should return the first point used in the constructor
         Point p1 = new Point(1, 1, 1);
         Point p2 = new Point(2, 3, 4);
         Point p3 = new Point(3, 1, 0);
@@ -56,12 +95,14 @@ class PlaneTests {
     @Test
     void testGetNormal() {
         // ============ Equivalence Partitions Tests ==============
-        // TC01: Check that getNormal(point) returns the same as getNormal()
+        // TC01: getNormal(point) should return same vector as getNormal()
         Point p1 = new Point(0, 0, 1);
         Point p2 = new Point(1, 0, 0);
         Point p3 = new Point(0, 1, 0);
         Plane plane = new Plane(p1, p2, p3);
-        Point pointOnPlane = new Point(1, 1, -1); // any point, assumed to be on the plane
-        assertEquals(plane.getNormal(), plane.getNormal(pointOnPlane), "getNormal(point) inconsistent with getNormal()");
+        Point anyPoint = new Point(0.5, 0.5, 0);
+
+        assertEquals(plane.getNormal(), plane.getNormal(anyPoint),
+                "getNormal(point) inconsistent with getNormal()");
     }
 }

@@ -12,6 +12,25 @@ class VectorTests {
     private static final double DELTA = 1e-10;
 
     /**
+     * Test method for {@link primitives.Vector#Vector(double, double, double)}.
+     */
+    @Test
+    void testConstructor() {
+        // ============ Equivalence Partitions Tests ==============
+
+        // TC01: Valid vector should not throw
+        assertDoesNotThrow(() -> new Vector(1, 2, 3),
+                "Failed constructing a correct vector");
+
+        // =============== Boundary Values Tests ==================
+
+        // TC10: Zero vector (0,0,0) → should throw exception
+        assertThrows(IllegalArgumentException.class,
+                () -> new Vector(0, 0, 0),
+                "Constructed zero vector which is invalid");
+    }
+
+    /**
      * Test method for {@link primitives.Vector#add(primitives.Vector)}.
      */
     @Test
@@ -95,7 +114,8 @@ class VectorTests {
         assertEquals(0, vr.dotProduct(v2), DELTA, "crossProduct() result not orthogonal to v2");
 
         // TC02: Length should be |v1| * |v2| * sin(angle)
-        double expectedLength = v1.length() * v2.length() * Math.sin(Math.acos(v1.dotProduct(v2) / (v1.length() * v2.length())));
+        double expectedLength = v1.length() * v2.length() * Math.sin(
+                Math.acos(v1.dotProduct(v2) / (v1.length() * v2.length())));
         assertEquals(expectedLength, vr.length(), DELTA, "crossProduct() result has wrong length");
 
         // =============== Boundary Values Tests ==================
