@@ -72,7 +72,7 @@ public class Vector {
     public double dotProduct(Vector other) {
         Double3 a = this.xyz;
         Double3 b = other.xyz;
-        return a.d1() * b.d1() + a.d2() * b.d2() + a.d3() * b.d3();
+        return (a.d1() * b.d1() + a.d2() * b.d2() + a.d3() * b.d3());
     }
 
     /**
@@ -99,7 +99,7 @@ public class Vector {
      */
     public double lengthSquared() {
         Double3 d = this.xyz;
-        return d.d1() * d.d1() + d.d2() * d.d2() + d.d3() * d.d3();
+        return (d.d1() * d.d1() + d.d2() * d.d2() + d.d3() * d.d3());
     }
 
     /**
@@ -119,8 +119,9 @@ public class Vector {
      */
     public Vector normalize() {
         double len = length();
-        if (Util.isZero(len)) throw new ArithmeticException("Cannot normalize zero vector");
-        return scale(1 / len);
+        if (Util.isZero(len))
+            throw new ArithmeticException("Cannot normalize zero vector");
+        return (scale(1 / len));
     }
 
     @Override
