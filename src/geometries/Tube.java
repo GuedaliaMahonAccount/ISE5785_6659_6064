@@ -20,8 +20,15 @@ public class Tube extends RadialGeometry {
      */
     public Tube(double radius, Ray axisRay) {
         super(radius);
+        if (radius <= 0) {
+            throw new IllegalArgumentException("Tube radius must be greater than 0");
+        }
+        if (axisRay == null) {
+            throw new IllegalArgumentException("Tube axisRay cannot be null");
+        }
         this.axisRay = axisRay;
     }
+
 
     /**
      * Returns the central axis ray of the tube.
