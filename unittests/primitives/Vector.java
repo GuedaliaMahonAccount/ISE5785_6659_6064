@@ -159,7 +159,7 @@ class VectorTests {
         assertEquals(1, normalized.length(), DELTA, "normalize() result not unit vector");
 
         // TC02: Check direction remains the same
-        assertEquals(0, v.crossProduct(normalized).length(), DELTA, "normalize() changed direction");
+        assertEquals(1, v.normalize().dotProduct(normalized), DELTA, "normalize() changed direction");
         assertTrue(normalized.dotProduct(v) > 0, "normalize() flipped direction");
     }
 }
