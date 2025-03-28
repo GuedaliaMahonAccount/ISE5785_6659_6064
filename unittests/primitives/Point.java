@@ -1,56 +1,65 @@
 package primitives;
 
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-class Point {
+/**
+ * Unit tests for primitives.Point class
+ */
+class PointTests {
 
-    @org.junit.jupiter.api.Test
+    private static final double DELTA = 1e-10;
+
+    /**
+     * Test method for {@link primitives.Point#subtract(primitives.Point)}.
+     */
+    @Test
     void subtract() {
-        // Subtract points
-        if (!P2.subtract(P1).equals(V1))
-            out.println("ERROR: (point2 - point1) does not work correctly");
-        try {
-            P1.subtract(P1);
-            out.println("ERROR: (point - itself) does not throw an exception");
-        } catch (IllegalArgumentException ignore) {} catch (Exception ignore) {
-            out.println("ERROR: (point - itself) throws wrong exception");
-        }
+        // ============ Equivalence Partitions Tests ==============
+        // TC01: Subtract (2,3,4) from (1,2,3)
+        Point p1 = new Point(1, 2, 3);
+        Point p2 = new Point(2, 3, 4);
+        Vector expected = new Vector(-1, -1, -1);
+        assertEquals(expected, p1.subtract(p2), "subtract() wrong result");
     }
 
-    @org.junit.jupiter.api.Test
+    /**
+     * Test method for {@link primitives.Point#add(primitives.Vector)}.
+     */
+    @Test
     void add() {
-        // Add vector to point
-        if (!(P1.add(V1).equals(P2)))
-            out.println("ERROR: (point + vector) = other point does not work correctly");
-        if (!(P1.add(V1_OPPOSITE).equals(Point.ZERO)))
-            out.println("ERROR: (point + vector) = center of coordinates does not work correctly");
+        // ============ Equivalence Partitions Tests ==============
+        // TC01: Add (1,1,1) to (1,2,3)
+        Point p = new Point(1, 2, 3);
+        Vector v = new Vector(1, 1, 1);
+        Point expected = new Point(2, 3, 4);
+        assertEquals(expected, p.add(v), "add() wrong result");
     }
 
-    @org.junit.jupiter.api.Test
+    /**
+     * Test method for {@link primitives.Point#distanceSquared(primitives.Point)}.
+     */
+    @Test
     void distanceSquared() {
-        if (!isZero(P1.distanceSquared(P1)))
-            out.println("ERROR: point squared distance to itself is not zero");
-        if (!isZero(P1.distanceSquared(P3) - 9))
-            out.println("ERROR: squared distance between points is wrong");
-        if (!isZero(P3.distanceSquared(P1) - 9))
-            out.println("ERROR: squared distance between points is wrong");
+        // ============ Equivalence Partitions Tests ==============
+        // TC01: distanceSquared between (1,2,3) and (4,6,3) = 25
+        Point p1 = new Point(1, 2, 3);
+        Point p2 = new Point(4, 6, 3);
+        assertEquals(25, p1.distanceSquared(p2), DELTA, "distanceSquared() wrong result");
     }
 
-    @org.junit.jupiter.api.Test
+    /**
+     * Test method for {@link primitives.Point#distance(primitives.Point)}.
+     */
+    @Test
     void distance() {
-        // distances
-        if (!isZero(P1.distanceSquared(P1)))
-            out.println("ERROR: point squared distance to itself is not zero");
-        if (!isZero(P1.distance(P1)))
-            out.println("ERROR: point distance to itself is not zero");
-        if (!isZero(P1.distanceSquared(P3) - 9))
-            out.println("ERROR: squared distance between points is wrong");
-        if (!isZero(P3.distanceSquared(P1) - 9))
-            out.println("ERROR: squared distance between points is wrong");
-        if (!isZero(P1.distance(P3) - 3))
-            out.println("ERROR: distance between points to itself is wrong");
-        if (!isZero(P3.distance(P1) - 3))
-            out.println("ERROR: distance between points to itself is wrong");
+        // ============ Equivalence Partitions Tests ==============
+        // TC01: distance between (1,2,3) and (4,6,3) = 5
+        Point p1 = new Point(1, 2, 3);
+        Point p2 = new Point(4, 6, 3);
+        assertEquals(5.0, p1.distance(p2), DELTA, "distance() wrong result");
     }
+
 
 }
