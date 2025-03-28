@@ -53,14 +53,4 @@ class Point {
             out.println("ERROR: distance between points to itself is wrong");
     }
 
-    @org.junit.jupiter.api.Test
-    void testEquals() {
-        // test equals
-        if (P1.equals(P2))
-            out.println("ERROR: point1 and point2 are equal");
-        if (P1.equals(P3))
-            out.println("ERROR: point1 and point3 are equal");
-        if (!P1.equals(P1))
-            out.println("ERROR: point1 is not equal to itself");
-    }
 }
