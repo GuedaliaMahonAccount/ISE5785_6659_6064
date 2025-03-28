@@ -9,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class VectorTests {
 
+    /**
+     * A small number
+     */
     private static final double DELTA = 1e-10;
 
     /**
