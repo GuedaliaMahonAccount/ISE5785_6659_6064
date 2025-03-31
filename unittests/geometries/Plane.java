@@ -37,6 +37,7 @@ class PlaneTests {
                         new Point(2, 2, 2)),
                 "Constructed a plane from colinear points");
 
+
         // =============== Boundary Values Tests ==================
 
         // TC10: Two identical points
@@ -52,6 +53,28 @@ class PlaneTests {
                         new Point(1, 1, 1),
                         new Point(1, 1, 1)),
                 "Constructed a plane with all points the same");
+
+        // TC12: First and third points identical
+        assertThrows(IllegalArgumentException.class, () -> new Plane(
+                        new Point(0, 0, 1),
+                        new Point(1, 1, 1),
+                        new Point(0, 0, 1)),
+                "Constructed a plane with first and third points identical");
+
+        // TC13: Second and third points identical
+        assertThrows(IllegalArgumentException.class, () -> new Plane(
+                        new Point(1, 0, 0),
+                        new Point(0, 0, 1),
+                        new Point(0, 0, 1)),
+                "Constructed a plane with second and third points identical");
+
+        // TC14: Three colinear points (on the same line)
+        assertThrows(IllegalArgumentException.class, () -> new Plane(
+                        new Point(0, 0, 0),
+                        new Point(1, 1, 1),
+                        new Point(2, 2, 2)),
+                "Constructed a plane from colinear points");
+
     }
 
     /**
