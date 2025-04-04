@@ -76,4 +76,56 @@ class TubeTests {
                 () -> tube.getNormal(axisPoint),
                 "getNormal() did not throw on axis point");
     }
+
+    /**
+     * Test method for {@link geometries.Tube#findIntersections(primitives.Ray)}.
+     */
+    @Test
+    void testFindIntersections() {
+        Tube tube = new Tube(1.0, new Ray(new Point(0, 0, 0), new Vector(0, 0, 1)));
+
+        // ============ Equivalence Partitions Tests ==============
+
+        // TC01: Ray crosses the tube (2 intersection points)
+        Ray ray1 = new Ray(new Point(-2, 0, 5), new Vector(1, 0, 0));
+        var result1 = tube.findIntersections(ray1);
+        assertNotNull(result1, "Expected intersections but got null");
+        assertEquals(2, result1.size(), "Expected 2 intersection points");
+
+        // TC02: Ray starts inside the tube and exits (1 point)
+        Ray ray2 = new Ray(new Point(0.5, 0, 5), new Vector(1, 0, 0));
+        var result2 = tube.findIntersections(ray2);
+        assertNotNull(result2, "Expected one intersection from inside");
+        assertEquals(1, result2.size(), "Expected 1 intersection point");
+
+        // TC03: Ray misses the tube completely
+        Ray ray3 = new Ray(new Point(3, 3, 5), new Vector(0, 1, 0));
+        assertNull(tube.findIntersections(ray3), "Expected no intersection (misses)");
+
+        // =============== Boundary Value Tests ==================
+
+        // TC11: Ray is tangent to the tube
+        Ray ray4 = new Ray(new Point(1, -1, 5), new Vector(0, 1, 0));
+        assertNull(tube.findIntersections(ray4), "Expected no intersection (tangent)");
+
+        // TC12: Ray starts on surface and goes outside
+        Ray ray5 = new Ray(new Point(1, 0, 0), new Vector(1, 0, 0));
+        assertNull(tube.findIntersections(ray5), "Expected no intersection (on surface outward)");
+
+        // TC13: Ray starts on surface and goes inside (1 point)
+        Ray ray6 = new Ray(new Point(1, 0, 0), new Vector(-1, 0, 0));
+        var result6 = tube.findIntersections(ray6);
+        assertNotNull(result6, "Expected 1 intersection going inside from surface");
+        assertEquals(1, result6.size(), "Expected 1 intersection");
+
+        // TC14: Ray is orthogonal and directed toward tube but starts past it
+        Ray ray7 = new Ray(new Point(2, 0, 0), new Vector(0, 0, 1));
+        assertNull(tube.findIntersections(ray7), "Expected no intersection (orthogonal outside)");
+
+        // TC15: Ray is parallel to tube axis and inside
+        Ray ray8 = new Ray(new Point(0.5, 0, -1), new Vector(0, 0, 1));
+        var result8 = tube.findIntersections(ray8);
+        assertNull(result8, "Tube has infinite length, but axis-parallel rays don't intersect sides");
+    }
+
 }

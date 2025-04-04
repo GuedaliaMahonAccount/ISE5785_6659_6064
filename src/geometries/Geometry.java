@@ -2,16 +2,16 @@ package geometries;
 
 import primitives.*;
 
+import java.util.List;
+
 /**
- * Abstract class representing any 3D geometric shape.
- * All geometries must be able to return a normal vector at a given point on the surface.
+ * Geometry interface represents all the geometric shapes
  */
-public abstract class Geometry {
+public interface Geometry extends Intersectable
+{
     /**
-     * Returns the normal vector to the geometry at the specified point.
-     *
-     * @param point the point on the geometry
-     * @return the normal vector
+     * @param p the function's Point parameter
+     * @return normal vector on the body from the Point parameter
      */
-    public abstract Vector getNormal(Point point);
+    public Vector getNormal(Point p);
 }

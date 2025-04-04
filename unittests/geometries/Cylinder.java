@@ -73,5 +73,4 @@ class CylinderTests {
         assertEquals(height, cylinder.getHeight(), DELTA, "getHeight() returned wrong value");
     }
 
-
 }

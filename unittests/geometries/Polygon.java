@@ -88,4 +88,22 @@ class PolygonTests {
             assertEquals(0d, result.dotProduct(pts[i].subtract(pts[i == 0 ? 3 : i - 1])), DELTA,
                     "Polygon's normal is not orthogonal to one of the edges");
     }
+
+    /**
+     * Test method for {@link geometries.Polygon#findIntersections(primitives.Ray)}.
+     * Since Polygon has no custom intersection logic, it always returns null.
+     */
+    @Test
+    void testFindIntersections() {
+        Polygon polygon = new Polygon(
+                new Point(0, 0, 1),
+                new Point(1, 0, 1),
+                new Point(1, 1, 1),
+                new Point(0, 1, 1)
+        );
+
+        Ray ray = new Ray(new Point(0.5, 0.5, 0), new Vector(0, 0, 1));
+        assertNull(polygon.findIntersections(ray), "Polygon should not handle intersections directly");
+    }
+
 }

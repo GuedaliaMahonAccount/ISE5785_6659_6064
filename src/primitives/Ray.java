@@ -51,4 +51,17 @@ public class Ray {
     public String toString() {
         return "Ray{" + p0 + ", " + dir + "}";
     }
+
+    /**
+     * Returns a point on the ray at a distance d from the starting point.
+     *
+     * @param d the distance from the starting point
+     * @return the point on the ray
+     */
+    public Point getPoint(double d) {
+        if(Util.isZero(d))
+            return getP0();
+
+        return getP0().add(getDir().scale(d));
+    }
 }

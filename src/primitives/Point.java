@@ -82,4 +82,32 @@ public class Point {
     public String toString() {
         return "Point" + xyz;
     }
+
+    /**
+     * Returns the x-coordinate of this point.
+     *
+     * @return the x-coordinate
+     */
+    public double getX() {
+        return xyz.d1();
+    }
+
+    /**
+     * Returns the y-coordinate of this point.
+     *
+     * @return the y-coordinate
+     */
+    public double getY() {
+        return xyz.d2();
+    }
+
+    /**
+     * Returns the z-coordinate of this point.
+     *
+     * @return the z-coordinate
+     */
+    public double getZ() {
+        return xyz.d3();
+    }
+
 }

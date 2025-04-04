@@ -2,6 +2,10 @@ package geometries;
 
 import primitives.*;
 
+import java.util.List;
+
+import static primitives.Util.alignZero;
+
 /**
  * The {@code Sphere} class represents a sphere in 3D space.
  * It is defined by a center point and a radius.
@@ -51,4 +55,39 @@ public class Sphere extends RadialGeometry {
     public String toString() {
         return "Sphere{" + center + ", r=" + radius + "}";
     }
+
+
+    @Override
+    public List<Point> findIntersections(Ray ray) {
+        Point p0 = ray.getP0();
+        Vector v = ray.getDir();
+
+        Vector u;
+        try {
+            u = center.subtract(p0);
+        } catch (IllegalArgumentException e) {
+            // Ray origin is at the center
+            return List.of(ray.getPoint(radius));
+        }
+
+        double tm = alignZero(v.dotProduct(u));
+        double dSquared = alignZero(u.lengthSquared() - tm * tm);
+        double rSquared = radius * radius;
+
+        if (dSquared >= rSquared) return null;
+
+        double th = alignZero(Math.sqrt(rSquared - dSquared));
+        double t1 = alignZero(tm - th);
+        double t2 = alignZero(tm + th);
+
+        if (t1 > 0 && t2 > 0)
+            return List.of(ray.getPoint(t1), ray.getPoint(t2));
+        if (t1 > 0)
+            return List.of(ray.getPoint(t1));
+        if (t2 > 0)
+            return List.of(ray.getPoint(t2));
+
+        return null;
+    }
+
 }

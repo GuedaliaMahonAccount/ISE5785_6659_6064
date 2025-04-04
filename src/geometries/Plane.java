@@ -2,11 +2,16 @@ package geometries;
 
 import primitives.*;
 
+import java.util.List;
+
+import static primitives.Util.alignZero;
+import static primitives.Util.isZero;
+
 /**
  * The {@code Plane} class represents a plane in 3D space.
  * It is defined either by three points or by a point and a normal vector.
  */
-public class Plane extends Geometry {
+public class Plane implements Geometry {
     /** A point on the plane. */
     private final Point q0;
     /** The normal vector to the plane. */
@@ -64,4 +69,33 @@ public class Plane extends Geometry {
     public String toString() {
         return "Plane{" + q0 + ", " + normal + "}";
     }
+
+
+    @Override
+    public List<Point> findIntersections(Ray ray) {
+        Point p0 = ray.getP0();
+        Vector v = ray.getDir();
+        Vector n = this.normal;
+
+        double nv = alignZero(n.dotProduct(v));
+
+        // If the ray is parallel to the plane
+        if (isZero(nv)) return null;
+
+        Vector q0MinusP0;
+        try {
+            q0MinusP0 = q0.subtract(p0);
+        } catch (IllegalArgumentException e) {
+            // The ray starts exactly at q0 (a point on the plane) → ignore as per spec
+            return null;
+        }
+
+        double t = alignZero(n.dotProduct(q0MinusP0) / nv);
+
+        // Intersection is behind the ray origin or at the origin
+        if (t <= 0) return null;
+
+        return List.of(ray.getPoint(t));
+    }
+
 }
