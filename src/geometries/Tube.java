@@ -1,10 +1,7 @@
 package geometries;
 
 import primitives.*;
-
 import java.util.List;
-
-import static primitives.Util.alignZero;
 import static primitives.Util.isZero;
 
 /**
@@ -76,8 +73,8 @@ public class Tube extends RadialGeometry {
 
         if (isParallel) {
             // Ray is parallel to tube axis - calculate distance from ray to axis
-            Vector vac = p0.subtract(pa); // Vector from axis point to ray point
-            double distanceSquared = vac.lengthSquared() - Math.pow(vac.dotProduct(va) / vaLength, 2);
+            //Vector vac = p0.subtract(pa); // Vector from axis point to ray point
+            //double distanceSquared = vac.lengthSquared() - Math.pow(vac.dotProduct(va) / vaLength, 2);
 
             // If distance equals radius, ray is tangent (no intersection points)
             // If distance is less than radius, ray is inside tube (no intersections with tube's sides)
@@ -91,11 +88,14 @@ public class Tube extends RadialGeometry {
         // Calculate vVa = v - va * (v · va) / (va · va)
         // Normalize the scale factor to prevent zero vector
         double vaLengthSquared = va.lengthSquared();
-        Vector vVa = v.subtract(va.scale(vDotVa / vaLengthSquared));
+        // Compute the projection factor for v and deltaP along va
+        double factor1 = vDotVa / vaLengthSquared;
+        Vector vVa = isZero(factor1) ? v : v.subtract(va.scale(factor1));
 
-        // Calculate dpVa = deltaP - va * (deltaP · va) / (va · va)
         double dpVaDot = deltaP.dotProduct(va);
-        Vector dpVa = deltaP.subtract(va.scale(dpVaDot / vaLengthSquared));
+        double factor2 = dpVaDot / vaLengthSquared;
+        Vector dpVa = isZero(factor2) ? deltaP : deltaP.subtract(va.scale(factor2));
+
 
         // Calculate quadratic coefficients
         double a = vVa.lengthSquared();
