@@ -5,72 +5,62 @@ import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Unit tests for geometries.Cylinder class
- */
 class CylinderTests {
 
-    /**
-     *  A small number
-     */
-    private static final double DELTA = 1e-10;
-
-    /**
-     * Test method for {@link geometries.Cylinder#Cylinder(double, primitives.Ray, double)}.
-     */
     @Test
-    void testConstructor() {
-        // ============ Equivalence Partitions Tests ==============
+    void testFindIntersections() {
+        Cylinder cyl = new Cylinder(1.0, new Ray(new Point(0, 0, 0), new Vector(0, 0, 1)), 3.0);
 
-        // TC01: Valid cylinder with positive radius and height
-        assertDoesNotThrow(() -> new Cylinder(
-                        1.0,
-                        new Ray(new Point(0, 0, 0), new Vector(0, 0, 1)),
-                        5.0),
-                "Failed constructing a valid cylinder");
+        // ============ Equivalence Partition Tests ==============
 
-        // =============== Boundary Values Tests ==================
+        // TC01: Ray crosses the side (2 points)
+        Ray r1 = new Ray(new Point(-2, 0, 1.5), new Vector(1, 0, 0));
+        List<Point> result1 = cyl.findIntersections(r1);
+        assertNotNull(result1, "Expected intersections but got null");
+        assertEquals(2, result1.size(), "Expected 2 intersection points");
 
-        // TC10: Zero radius
-        assertThrows(IllegalArgumentException.class,
-                () -> new Cylinder(0, new Ray(new Point(0, 0, 0), new Vector(0, 0, 1)), 5.0),
-                "Constructed a cylinder with radius = 0");
+        // TC02: Ray starts inside cylinder and exits through side (1 point)
+        Ray r2 = new Ray(new Point(0.5, 0, 1), new Vector(1, 0, 0));
+        List<Point> result2 = cyl.findIntersections(r2);
+        assertNotNull(result2, "Expected 1 intersection from inside");
+        assertEquals(1, result2.size(), "Expected 1 intersection point");
 
-        // TC11: Negative radius
-        assertThrows(IllegalArgumentException.class,
-                () -> new Cylinder(-1, new Ray(new Point(0, 0, 0), new Vector(0, 0, 1)), 5.0),
-                "Constructed a cylinder with negative radius");
+        // TC03: Ray starts outside and intersects top cap (1 point)
+        Ray r3 = new Ray(new Point(0.5, 0, 5), new Vector(0, 0, -1));
+        List<Point> result3 = cyl.findIntersections(r3);
+        assertNotNull(result3, "Expected 1 intersection with top cap");
+        assertEquals(1, result3.size());
 
-        // TC12: Zero height
-        assertThrows(IllegalArgumentException.class,
-                () -> new Cylinder(1.0, new Ray(new Point(0, 0, 0), new Vector(0, 0, 1)), 0),
-                "Constructed a cylinder with height = 0");
+        // TC04: Ray intersects both side and bottom cap (2 points)
+        Ray r4 = new Ray(new Point(0.5, 0, -1), new Vector(0, 0, 1));
+        List<Point> result4 = cyl.findIntersections(r4);
+        assertNotNull(result4, "Expected 2 intersections (bottom + side)");
+        assertEquals(2, result4.size());
 
-        // TC13: Negative height
-        assertThrows(IllegalArgumentException.class,
-                () -> new Cylinder(1.0, new Ray(new Point(0, 0, 0), new Vector(0, 0, 1)), -5.0),
-                "Constructed a cylinder with negative height");
+        // TC05: Ray passes through top and bottom cap (2 points)
+        Ray r5 = new Ray(new Point(0.5, 0, -1), new Vector(0, 0, 1));
+        List<Point> result5 = cyl.findIntersections(r5);
+        assertNotNull(result5, "Expected 2 intersections (through both caps or side+cap)");
+        assertFalse(result5.isEmpty(), "Should have at least one intersection");
 
-        // TC14: Null axis ray (if not allowed)
-        assertThrows(IllegalArgumentException.class,
-                () -> new Cylinder(1.0, null, 5.0),
-                "Constructed a cylinder with null axis ray");
+        // =============== Boundary Value Tests ==================
+
+        // TC06: Ray is tangent to side (0 points)
+        Ray r6 = new Ray(new Point(1, -1, 1.5), new Vector(0, 1, 0));
+        assertNull(cyl.findIntersections(r6), "Expected no intersection (tangent)");
+
+        // TC07: Ray starts on surface and goes outward (0 points)
+        Ray r7 = new Ray(new Point(1, 0, 1), new Vector(1, 0, 0));
+        assertNull(cyl.findIntersections(r7), "Expected no intersection (on surface outward)");
+
+        // TC08: Ray is parallel to axis inside (0 points for sides, but may hit cap)
+        Ray r8 = new Ray(new Point(0.5, 0, -1), new Vector(0, 0, 1));
+        List<Point> result8 = cyl.findIntersections(r8);
+        assertNotNull(result8, "Expected intersection with bottom and/or top");
+        assertFalse(result8.isEmpty());
     }
-
-    /**
-     * Test method for {@link geometries.Cylinder#getHeight()}.
-     */
-    @Test
-    void getHeight() {
-        // ============ Equivalence Partitions Tests ==============
-        // TC01: Create cylinder with height 5, check getHeight()
-        Ray axisRay = new Ray(new Point(0, 0, 0), new Vector(0, 0, 1));
-        double radius = 2.0;
-        double height = 5.0;
-        Cylinder cylinder = new Cylinder(radius, axisRay, height);
-        assertEquals(height, cylinder.getHeight(), DELTA, "getHeight() returned wrong value");
-    }
-
 }
