@@ -83,8 +83,30 @@ public class Polygon implements Geometry {
 
    @Override
    public List<Point> findIntersections(Ray ray) {
-      // Polygon intentionally does not implement intersection logic.
-      return null;
+      List<Point> intersections = plane.findIntersections(ray);
+      if (intersections == null) return null;
+
+
+      Point p = intersections.getFirst(); // the intersection point with the plane
+
+      Vector n = plane.getNormal(); // plane normal is constant
+
+      // For each edge, check if the point is inside using the sign of the cross product
+      for (int i = 0; i < size; i++) {
+         Point vi = vertices.get(i);
+         Point vj = vertices.get((i + 1) % size);
+
+         Vector edge = vj.subtract(vi);
+         Vector vp = p.subtract(vi);
+
+         Vector cross = edge.crossProduct(vp);
+         double sign = alignZero(cross.dotProduct(n));
+
+         if (sign < 0) return null; // point is outside the polygon
+      }
+
+      return List.of(p);
    }
+
 
 }

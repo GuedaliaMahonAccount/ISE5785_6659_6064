@@ -1,13 +1,8 @@
 package geometries;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
-
-import geometries.Plane;
-import geometries.Polygon;
 import primitives.*;
 
 /**
@@ -102,8 +97,14 @@ class PolygonTests {
                 new Point(0, 1, 1)
         );
 
+        // Ray intersects the polygon at the center
         Ray ray = new Ray(new Point(0.5, 0.5, 0), new Vector(0, 0, 1));
-        assertNull(polygon.findIntersections(ray), "Polygon should not handle intersections directly");
+        List<Point> result = polygon.findIntersections(ray);
+
+        assertNotNull(result, "Expected intersection point");
+        assertEquals(1, result.size(), "Expected exactly one intersection point");
+        assertEquals(new Point(0.5, 0.5, 1), result.getFirst(), "Wrong intersection point");
     }
+
 
 }

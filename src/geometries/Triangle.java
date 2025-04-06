@@ -29,34 +29,39 @@ public class Triangle extends Polygon {
 
     @Override
     public List<Point> findIntersections(Ray ray) {
-        // Step 1: Intersect with the plane
+        // Step 1: Use the plane's intersection
         List<Point> planeIntersections = plane.findIntersections(ray);
         if (planeIntersections == null) return null;
 
-        Point p0 = ray.getP0();
+        Point p = planeIntersections.getFirst(); // intersection point
+
+        // Triangle vertices
+        Point v1 = vertices.get(0);
+        Point v2 = vertices.get(1);
+        Point v3 = vertices.get(2);
+
         Vector dir = ray.getDir();
-        Point p = planeIntersections.getFirst(); // The potential intersection point
+        Point p0 = ray.getP0();
 
-        Vector v1 = vertices.get(0).subtract(p0);
-        Vector v2 = vertices.get(1).subtract(p0);
-        Vector v3 = vertices.get(2).subtract(p0);
+        // Vectors from p0 to triangle vertices
+        Vector u = v1.subtract(p0);
+        Vector v = v2.subtract(p0);
+        Vector w = v3.subtract(p0);
 
-        Vector n1 = v1.crossProduct(v2).normalize();
-        Vector n2 = v2.crossProduct(v3).normalize();
-        Vector n3 = v3.crossProduct(v1).normalize();
+        // Normals of sub-triangles
+        Vector n1 = u.crossProduct(v).normalize();
+        Vector n2 = v.crossProduct(w).normalize();
+        Vector n3 = w.crossProduct(u).normalize();
 
+        // Check the direction signs
         double s1 = alignZero(dir.dotProduct(n1));
         double s2 = alignZero(dir.dotProduct(n2));
         double s3 = alignZero(dir.dotProduct(n3));
 
-        // All signs must be the same (either all positive or all negative)
         boolean allPositive = s1 > 0 && s2 > 0 && s3 > 0;
         boolean allNegative = s1 < 0 && s2 < 0 && s3 < 0;
 
-        if (allPositive || allNegative)
-            return List.of(p); // Intersection inside triangle
-
-        return null; // Intersection outside or on edge/vertex
+        return (allPositive || allNegative) ? List.of(p) : null;
     }
 
 }

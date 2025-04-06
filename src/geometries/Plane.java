@@ -86,16 +86,18 @@ public class Plane implements Geometry {
         try {
             q0MinusP0 = q0.subtract(p0);
         } catch (IllegalArgumentException e) {
-            // The ray starts exactly at q0 (a point on the plane) → ignore as per spec
+            // The ray starts exactly at q0 → no intersection
             return null;
         }
 
         double t = alignZero(n.dotProduct(q0MinusP0) / nv);
 
-        // Intersection is behind the ray origin or at the origin
+        // If the intersection point is behind or on the origin
         if (t <= 0) return null;
 
+        // ✅ Use getPoint here
         return List.of(ray.getPoint(t));
     }
+
 
 }
