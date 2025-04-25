@@ -42,6 +42,15 @@ public class Point {
     }
 
     /**
+     * Translate this point by –v.
+     */
+    public Point subtract(Vector v) {
+        // we can reuse Double3.subtract, then wrap back into a Point
+        return new Point(this.xyz.subtract(v.xyz));
+    }
+
+
+    /**
      * Adds a vector to this point, returning a new point.
      *
      * @param vector the vector to add

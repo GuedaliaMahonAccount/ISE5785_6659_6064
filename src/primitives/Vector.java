@@ -1,132 +1,92 @@
 package primitives;
 
+import static primitives.Util.isZero;
+
 /**
- * The {@code Vector} class represents a vector in 3D Cartesian space.
- * Vectors are immutable and cannot be the zero vector.
+ * The {@code Vector} class represents a non-zero vector in 3D Cartesian space.
+ * It *extends* Point so that you can use a Vector anywhere a Point is expected.
  */
-public class Vector {
-    /**
-     * The x, y, and z components of the vector.
-     */
-    final Double3 xyz;
+public class Vector extends Point {
+    // standard unit axes:
+    public static final Vector AXIS_X = new Vector(1, 0, 0);
+    public static final Vector AXIS_Y = new Vector(0, 1, 0);
+    public static final Vector AXIS_Z = new Vector(0, 0, 1);
 
     /**
-     * Constructs a vector with the specified x, y, and z components.
-     *
-     * @param x the x-component
-     * @param y the y-component
-     * @param z the z-component
+     * Constructs a non-zero vector from three coordinates.
+     * @throws IllegalArgumentException if (x,y,z) == (0,0,0)
      */
     public Vector(double x, double y, double z) {
-        this(new Double3(x, y, z));
+        super(x, y, z);
+        if (this.xyz.equals(Double3.ZERO))
+            throw new IllegalArgumentException("Zero vector is not allowed");
     }
 
     /**
-     * Constructs a vector using a {@code Double3} object.
-     *
-     * @param xyz the {@code Double3} representing the components
-     * @throws IllegalArgumentException if the vector is the zero vector
+     * Constructs a non-zero vector from a Double3.
+     * @throws IllegalArgumentException if the triple is zero
      */
     public Vector(Double3 xyz) {
+        super(xyz);
         if (xyz.equals(Double3.ZERO))
             throw new IllegalArgumentException("Zero vector is not allowed");
-        this.xyz = xyz;
     }
 
-    /**
-     * Adds another vector to this vector.
-     *
-     * @param other the other vector to add
-     * @return the resulting vector
-     */
+    /** Vector-vector addition */
     public Vector add(Vector other) {
         return new Vector(this.xyz.add(other.xyz));
     }
 
-    /**
-     * Subtracts another vector from this vector.
-     *
-     * @param other the vector to subtract
-     * @return the resulting vector
-     */
+    /** Vector-vector subtraction */
     public Vector subtract(Vector other) {
         return new Vector(this.xyz.subtract(other.xyz));
     }
 
-    /**
-     * Scales this vector by a scalar.
-     *
-     * @param scalar the scalar value
-     * @return the scaled vector
-     */
+    /** Scale this vector by a scalar */
     public Vector scale(double scalar) {
         return new Vector(this.xyz.scale(scalar));
     }
 
-    /**
-     * Computes the dot product with another vector.
-     *
-     * @param other the other vector
-     * @return the dot product result
-     */
+    /** Dot product */
     public double dotProduct(Vector other) {
-        Double3 a = this.xyz;
-        Double3 b = other.xyz;
-        return (a.d1() * b.d1() + a.d2() * b.d2() + a.d3() * b.d3());
+        Double3 a = this.xyz, b = other.xyz;
+        return a.d1()*b.d1() + a.d2()*b.d2() + a.d3()*b.d3();
     }
 
-    /**
-     * Computes the cross product with another vector.
-     *
-     * @param other the other vector
-     * @return the resulting vector perpendicular to both
-     */
+    /** Cross product */
     public Vector crossProduct(Vector other) {
-        double x1 = this.xyz.d1(), y1 = this.xyz.d2(), z1 = this.xyz.d3();
+        double x1 = xyz.d1(), y1 = xyz.d2(), z1 = xyz.d3();
         double x2 = other.xyz.d1(), y2 = other.xyz.d2(), z2 = other.xyz.d3();
-
         return new Vector(
-                y1 * z2 - z1 * y2,
-                z1 * x2 - x1 * z2,
-                x1 * y2 - y1 * x2
+                y1*z2 - z1*y2,
+                z1*x2 - x1*z2,
+                x1*y2 - y1*x2
         );
     }
 
-    /**
-     * Returns the squared length of the vector.
-     *
-     * @return the squared length
-     */
+    /** Squared length */
     public double lengthSquared() {
         Double3 d = this.xyz;
-        return (d.d1() * d.d1() + d.d2() * d.d2() + d.d3() * d.d3());
+        return d.d1()*d.d1() + d.d2()*d.d2() + d.d3()*d.d3();
     }
 
-    /**
-     * Returns the length (magnitude) of the vector.
-     *
-     * @return the length
-     */
+    /** Length */
     public double length() {
         return Math.sqrt(lengthSquared());
     }
 
-    /**
-     * Normalizes this vector (returns a unit vector).
-     *
-     * @return the normalized vector
-     * @throws ArithmeticException if the vector is zero
-     */
+    /** Normalize to a unit vector */
     public Vector normalize() {
         double len = length();
-        if (Util.isZero(len))
+        if (isZero(len))
             throw new ArithmeticException("Cannot normalize zero vector");
-        return (scale(1 / len));
+        return scale(1.0 / len);
     }
 
     @Override
     public boolean equals(Object obj) {
-        return this == obj || (obj instanceof Vector other && this.xyz.equals(other.xyz));
+        return this == obj ||
+                (obj instanceof Vector other && this.xyz.equals(other.xyz));
     }
 
     @Override
