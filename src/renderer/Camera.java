@@ -129,24 +129,14 @@ public class Camera implements Cloneable {
     public static class Builder {
         private final Camera camera = new Camera();
 
-        /**
-         * Set camera position
-         * @param p point in 3D space
-         * @return this builder
-         */
         public Builder setLocation(Point p) {
+            if (p == null) throw new IllegalArgumentException("Location must not be null");
             camera.position = p;
             return this;
         }
 
-        /**
-         * Set direction vectors explicitly
-         * @param to forward direction vector
-         * @param up upward vector
-         * @return this builder
-         * @throws IllegalArgumentException if vectors are not orthogonal
-         */
         public Builder setDirection(Vector to, Vector up) {
+            if (to == null || up == null) throw new IllegalArgumentException("Direction vectors must not be null");
             if (!isZero(to.dotProduct(up))) {
                 throw new IllegalArgumentException("vTo and vUp must be orthogonal");
             }
@@ -155,21 +145,12 @@ public class Camera implements Cloneable {
             return this;
         }
 
-        /**
-         * Set camera to look at a target point using a default up vector (0,1,0)
-         * @param target point to look at
-         * @return this builder
-         * @throws IllegalArgumentException if the default up vector is parallel to vTo
-         */
         public Builder setDirection(Point target) {
             // Compute forward direction
             Vector to = target.subtract(camera.position).normalize();
-            // Default up direction
             Vector defaultUp = new Vector(0, 1, 0);
-            // Remove component along to
             double dot = defaultUp.dotProduct(to);
             Vector upProj = defaultUp.subtract(to.scale(dot));
-            // Check for degeneracy
             if (isZero(upProj.length())) {
                 throw new IllegalArgumentException("Default up vector is parallel to view direction");
             }
@@ -178,22 +159,11 @@ public class Camera implements Cloneable {
             return this;
         }
 
-        /**
-         * Set camera to look at a target point with a provided up vector
-         * @param target point to look at
-         * @param up    user-provided up vector
-         * @return this builder
-         * @throws IllegalArgumentException if the provided up vector is parallel to vTo
-         */
         public Builder setDirection(Point target, Vector up) {
-            // Compute forward direction
             Vector to = target.subtract(camera.position).normalize();
-            // Normalize the provided up vector
             Vector upNorm = up.normalize();
-            // Remove component along to
             double dot = upNorm.dotProduct(to);
             Vector upProj = upNorm.subtract(to.scale(dot));
-            // Check for degeneracy
             if (isZero(upProj.length())) {
                 throw new IllegalArgumentException("Provided up vector is parallel to view direction");
             }
@@ -202,44 +172,90 @@ public class Camera implements Cloneable {
             return this;
         }
 
-        /**
-         * Set the size of the view plane
-         * @param width  width in world units
-         * @param height height in world units
-         * @return this builder
-         */
         public Builder setVpSize(double width, double height) {
+            if (width <= 0 || height <= 0) throw new IllegalArgumentException("View plane size must be positive");
             camera.width = width;
             camera.height = height;
             return this;
         }
 
-        /**
-         * Set the resolution (pixel count) on the view plane
-         * @param nX number of columns (pixels)
-         * @param nY number of rows (pixels)
-         * @return this builder
-         */
         public Builder setResolution(int nX, int nY) {
+            if (nX <= 0 || nY <= 0) throw new IllegalArgumentException("Resolution must be positive");
             camera.nX = nX;
             camera.nY = nY;
             return this;
         }
 
+        public Builder setVpDistance(double distance) {
+            if (distance <= 0) throw new IllegalArgumentException("View plane distance must be positive");
+            camera.distance = distance;
+            return this;
+        }
+
+        // === Bonus: transformations ===
+
         /**
-         * Set the distance from camera to view plane
-         * @param distance in world units
+         * Translate the camera position by the given vector.
+         * @param delta translation vector
          * @return this builder
          */
-        public Builder setVpDistance(double distance) {
-            camera.distance = distance;
+        public Builder translate(Vector delta) {
+            if (delta == null) throw new IllegalArgumentException("Translation vector must not be null");
+            camera.position = camera.position.add(delta);
+            return this;
+        }
+
+        /**
+         * Rotate a vector around an axis by the given angle (radians).
+         */
+        private static Vector rotateVector(Vector v, Vector axis, double angle) {
+            Vector k = axis.normalize();
+            return v.scale(Math.cos(angle))
+                    .add(k.crossProduct(v).scale(Math.sin(angle)))
+                    .add(k.scale(k.dotProduct(v) * (1 - Math.cos(angle))));
+        }
+
+        /**
+         * Rotate camera around its up axis (yaw) by the given angle in degrees.
+         * @param angleDegrees rotation angle
+         * @return this builder
+         */
+        public Builder rotateYaw(double angleDegrees) {
+            if (isZero(angleDegrees)) return this;
+            double rad = Math.toRadians(angleDegrees);
+            camera.vTo = rotateVector(camera.vTo, camera.vUp, rad).normalize();
+            camera.vRight = camera.vTo.crossProduct(camera.vUp).normalize();
+            return this;
+        }
+
+        /**
+         * Rotate camera around its right axis (pitch) by the given angle in degrees.
+         * @param angleDegrees rotation angle
+         * @return this builder
+         */
+        public Builder rotatePitch(double angleDegrees) {
+            if (isZero(angleDegrees)) return this;
+            double rad = Math.toRadians(angleDegrees);
+            camera.vTo = rotateVector(camera.vTo, camera.vRight, rad).normalize();
+            camera.vUp = camera.vRight.crossProduct(camera.vTo).normalize();
+            return this;
+        }
+
+        /**
+         * Rotate camera around its forward axis (roll) by the given angle in degrees.
+         * @param angleDegrees rotation angle
+         * @return this builder
+         */
+        public Builder rotateRoll(double angleDegrees) {
+            if (isZero(angleDegrees)) return this;
+            double rad = Math.toRadians(angleDegrees);
+            camera.vUp = rotateVector(camera.vUp, camera.vTo, rad).normalize();
+            camera.vRight = camera.vTo.crossProduct(camera.vUp).normalize();
             return this;
         }
 
         /**
          * Final build step - validate and return a fully initialized Camera object
-         * @return built Camera
-         * @throws MissingResourceException if required fields are missing or invalid
          */
         public Camera build() {
             if (camera.position == null)
@@ -249,7 +265,6 @@ public class Camera implements Cloneable {
             if (isZero(camera.distance) || isZero(camera.height) || isZero(camera.width))
                 throw new MissingResourceException(MISSING_RESOURCE, CAMERA_CLASS_NAME, "distance, width, or height");
 
-            // Compute right direction
             camera.vRight = camera.vTo.crossProduct(camera.vUp).normalize();
             return camera.clone();
         }
