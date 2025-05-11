@@ -8,10 +8,10 @@ import geometries.Geometries;
  * Class representing a 3D scene.
  */
 public class Scene {
-    private String name;
-    private Color background;
-    private AmbientLight ambientLight;
-    private Geometries geometries;
+    public String name;
+    public Color background;
+    public AmbientLight ambientLight;
+    public Geometries geometries;
 
     /**
      * Constructor that initializes the scene with default values.
