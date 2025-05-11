@@ -60,4 +60,8 @@ public class Geometries implements Intersectable {
 
         return result;
     }
+
+    public boolean isEmpty() {
+        return geometries.isEmpty();
+    }
 }

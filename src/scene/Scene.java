@@ -24,6 +24,20 @@ public class Scene {
         this.geometries = new Geometries();
     }
 
+    /**
+     * Constructor for initializing a scene with specific parameters.
+     * @param name The name of the scene.
+     * @param background The background color.
+     * @param ambientLight The ambient light.
+     * @param geometries The geometries in the scene.
+     */
+    public Scene(String name, Color background, AmbientLight ambientLight, Geometries geometries) {
+        this.name = name;
+        this.background = background;
+        this.ambientLight = ambientLight;
+        this.geometries = geometries;
+    }
+
     // Setters for chaining
     public Scene setBackground(Color background) {
         this.background = background;
@@ -41,6 +55,10 @@ public class Scene {
     }
 
     // Getters
+    public String getName() {
+        return name;
+    }
+
     public Color getBackground() {
         return background;
     }
@@ -55,6 +73,11 @@ public class Scene {
 
     @Override
     public String toString() {
-        return "Scene{name='" + name + "', background=" + background + ", ambientLight=" + ambientLight + "}";
+        return "Scene{" +
+                "name='" + name + '\'' +
+                ", background=" + background +
+                ", ambientLight=" + ambientLight +
+                ", geometries=" + geometries +
+                '}';
     }
 }
