@@ -1,10 +1,11 @@
 package geometries;
 
-import primitives.*;
-
+import primitives.Point;
+import primitives.Ray;
+import primitives.Vector;
 import java.util.List;
-
 import static primitives.Util.alignZero;
+import geometries.Intersectable.GeoPoint;
 
 /**
  * The {@code Triangle} class represents a triangle in 3D space.
@@ -28,12 +29,14 @@ public class Triangle extends Polygon {
     }
 
     @Override
-    public List<Point> findIntersections(Ray ray) {
+    public List<GeoPoint> findIntersections(Ray ray) {
         // Step 1: Use the plane's intersection
-        List<Point> planeIntersections = plane.findIntersections(ray);
+        List<GeoPoint> planeIntersections = plane.findIntersections(ray);
         if (planeIntersections == null) return null;
 
-        Point p = planeIntersections.getFirst(); // intersection point
+        // Only consider the first intersection point
+        GeoPoint geoPoint = planeIntersections.get(0);
+        Point p = geoPoint.point;
 
         // Triangle vertices
         Point v1 = vertices.get(0);
@@ -61,7 +64,7 @@ public class Triangle extends Polygon {
         boolean allPositive = s1 > 0 && s2 > 0 && s3 > 0;
         boolean allNegative = s1 < 0 && s2 < 0 && s3 < 0;
 
-        return (allPositive || allNegative) ? List.of(p) : null;
+        // Return the GeoPoint if the intersection is inside the triangle
+        return (allPositive || allNegative) ? List.of(new GeoPoint(this, p)) : null;
     }
-
 }

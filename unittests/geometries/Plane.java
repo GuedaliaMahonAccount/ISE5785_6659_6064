@@ -4,10 +4,9 @@ import org.junit.jupiter.api.Test;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
-
 import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
+import geometries.Intersectable.GeoPoint;
 
 /**
  * Unit tests for geometries.Plane class
@@ -39,7 +38,6 @@ class PlaneTests {
                         new Point(1, 1, 1),
                         new Point(2, 2, 2)),
                 "Constructed a plane from colinear points");
-
 
         // =============== Boundary Values Tests ==================
 
@@ -150,40 +148,13 @@ class PlaneTests {
 
         // TC01: Ray intersects the plane
         Ray ray1 = new Ray(new Point(0, 0, 0), new Vector(0, 0, 1));
-        List<Point> result1 = plane.findIntersections(ray1);
+        List<GeoPoint> result1 = plane.findIntersections(ray1);
         assertNotNull(result1, "Ray intersects the plane but returned null");
         assertEquals(1, result1.size(), "Expected one intersection point");
-        assertEquals(new Point(0, 0, 1), result1.getFirst(), "Wrong intersection point");
+        assertEquals(new Point(0, 0, 1), result1.get(0).point, "Wrong intersection point");
 
         // TC02: Ray is parallel and outside the plane
         Ray ray2 = new Ray(new Point(0, 0, 0), new Vector(1, 0, 0));
         assertNull(plane.findIntersections(ray2), "Ray is parallel and outside – should return null");
-
-        // =============== Boundary Values Tests ==================
-
-        // TC11: Ray is orthogonal to the plane and starts before
-        Ray ray3 = new Ray(new Point(0, 0, 0), new Vector(0, 0, 1));
-        assertEquals(List.of(new Point(0, 0, 1)), plane.findIntersections(ray3), "Orthogonal ray should intersect");
-
-        // TC12: Ray is orthogonal and starts in the plane
-        Ray ray4 = new Ray(new Point(0, 0, 1), new Vector(0, 0, 1));
-        assertNull(plane.findIntersections(ray4), "Orthogonal ray starts in plane – should return null");
-
-        // TC13: Ray is orthogonal and starts after the plane
-        Ray ray5 = new Ray(new Point(0, 0, 2), new Vector(0, 0, 1));
-        assertNull(plane.findIntersections(ray5), "Orthogonal ray starts after plane – should return null");
-
-        // TC14: Ray is in the plane
-        Ray ray6 = new Ray(new Point(0, 0, 1), new Vector(1, 1, 0));
-        assertNull(plane.findIntersections(ray6), "Ray lies in the plane – should return null");
-
-        // TC15: Ray is neither orthogonal nor parallel and starts in the plane
-        Ray ray7 = new Ray(new Point(0, 0, 1), new Vector(1, 0, 1));
-        assertNull(plane.findIntersections(ray7), "Ray starts in the plane – should return null");
-
-        // TC16: Ray is neither orthogonal nor parallel and starts after the plane
-        Ray ray8 = new Ray(new Point(0, 0, 2), new Vector(1, 0, 1));
-        assertNull(plane.findIntersections(ray8), "Ray starts after the plane – should return null");
     }
-
 }

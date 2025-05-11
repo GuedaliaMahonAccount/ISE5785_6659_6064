@@ -32,7 +32,8 @@ class TriangleTests {
         Ray ray = new Ray(new Point(3, 3, 2), new Vector(-1, -1, -4));
         Triangle triangle = new Triangle(new Point(1, 0, 0), new Point(1, 5, 0), new Point(6, 0, 0));
         assertEquals(1, triangle.findIntersections(ray).size());
-        assertEquals(new Point(2.5, 2.5, 0), triangle.findIntersections(ray).getFirst());
+        // Extract the point from the GeoPoint
+        assertEquals(new Point(2.5, 2.5, 0), triangle.findIntersections(ray).get(0).point);
 
         // EP02 ray misses triangle on one side
         ray = new Ray(new Point(3, 3, 2), new Vector(1, 1, -4));

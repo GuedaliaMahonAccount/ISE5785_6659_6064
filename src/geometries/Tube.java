@@ -1,8 +1,13 @@
 package geometries;
 
-import primitives.*;
+import primitives.Point;
+import primitives.Ray;
+import primitives.Vector;
+
+import java.util.LinkedList;
 import java.util.List;
 import static primitives.Util.isZero;
+import geometries.Intersectable.GeoPoint;
 
 /**
  * The {@code Tube} class represents an infinite cylinder (without caps).
@@ -31,7 +36,6 @@ public class Tube extends RadialGeometry {
         this.axisRay = axisRay;
     }
 
-
     /**
      * Returns the central axis ray of the tube.
      *
@@ -56,67 +60,84 @@ public class Tube extends RadialGeometry {
     }
 
     @Override
-    public List<Point> findIntersections(Ray ray) {
+    public List<GeoPoint> findIntersections(Ray ray) {
         Point p0 = ray.getP0();
         Vector v = ray.getDir();
 
         Point pa = axisRay.getP0();
         Vector va = axisRay.getDir();
 
-        // First, check if ray is parallel to axis
+        Vector deltaP = p0.subtract(pa);
+
+        // Check if ray is parallel to tube axis - handle separately
         double vDotVa = v.dotProduct(va);
+        if (Math.abs(Math.abs(vDotVa) - 1) < 1e-10) {
+            // Ray is parallel to tube axis
+            // Calculate distance from ray to axis
+            Vector cross = deltaP.crossProduct(va);
+            double distanceSquared = cross.lengthSquared() / va.lengthSquared();
 
-        // Check if v and va are parallel (their directions are either the same or opposite)
-        double vLength = v.length();
-        double vaLength = va.length();
-        boolean isParallel = Math.abs(Math.abs(vDotVa) - vLength * vaLength) < 1e-10;
-
-        if (isParallel) {
-            // Ray is parallel to tube axis - calculate distance from ray to axis
-            //Vector vac = p0.subtract(pa); // Vector from axis point to ray point
-            //double distanceSquared = vac.lengthSquared() - Math.pow(vac.dotProduct(va) / vaLength, 2);
-
-            // If distance equals radius, ray is tangent (no intersection points)
-            // If distance is less than radius, ray is inside tube (no intersections with tube's sides)
-            // If distance is greater than radius, ray misses tube (no intersections)
+            if (Math.abs(distanceSquared - radius * radius) < 1e-10) {
+                // Ray is on the tube surface
+                return null;
+            }
+            if (distanceSquared > radius * radius) {
+                // Ray is outside the tube
+                return null;
+            }
+            // Ray is inside the tube and parallel - no side intersections
             return null;
         }
 
-        // Ray is not parallel to axis - proceed with normal intersection calculation
-        Vector deltaP = p0.subtract(pa);
+        // Ray is not parallel to the axis, solve quadratic equation
+        // We need to find where the ray intersects the infinite cylinder
 
-        // Calculate vVa = v - va * (v · va) / (va · va)
-        // Normalize the scale factor to prevent zero vector
-        double vaLengthSquared = va.lengthSquared();
-        // Compute the projection factor for v and deltaP along va
-        double factor1 = vDotVa / vaLengthSquared;
-        Vector vVa = isZero(factor1) ? v : v.subtract(va.scale(factor1));
+        // Calculate the coefficients for the quadratic equation
+        // We're finding where ||p0 + tv - (pa + (va·(p0 + tv - pa))va)|| = r
 
-        double dpVaDot = deltaP.dotProduct(va);
-        double factor2 = dpVaDot / vaLengthSquared;
-        Vector dpVa = isZero(factor2) ? deltaP : deltaP.subtract(va.scale(factor2));
+        // Component of deltaP perpendicular to va
+        Vector deltaPPerp = deltaP;
+        double deltaPDotVa = deltaP.dotProduct(va);
+        if (!isZero(deltaPDotVa)) {
+            deltaPPerp = deltaP.subtract(va.scale(deltaPDotVa));
+        }
 
+        // Component of v perpendicular to va
+        Vector vPerp = v;
+        if (!isZero(vDotVa)) {
+            vPerp = v.subtract(va.scale(vDotVa));
+        }
 
-        // Calculate quadratic coefficients
-        double a = vVa.lengthSquared();
-        double b = 2 * vVa.dotProduct(dpVa);
-        double c = dpVa.lengthSquared() - radius * radius;
+        // Quadratic equation coefficients
+        double a = vPerp.lengthSquared();
+        double b = 2 * vPerp.dotProduct(deltaPPerp);
+        double c = deltaPPerp.lengthSquared() - radius * radius;
 
+        // If a is very small, the ray is nearly parallel to the axis
+        if (isZero(a)) {
+            return null;
+        }
+
+        // Discriminant check
         double discriminant = b * b - 4 * a * c;
+        if (discriminant <= 0) return null; // No real solutions
 
-        if (discriminant <= 0) return null;
-
+        // Calculate intersection parameter values
         double sqrtDisc = Math.sqrt(discriminant);
         double t1 = (-b - sqrtDisc) / (2 * a);
         double t2 = (-b + sqrtDisc) / (2 * a);
 
-        if (t1 > 0 && t2 > 0)
-            return List.of(ray.getPoint(t1), ray.getPoint(t2));
-        if (t1 > 0)
-            return List.of(ray.getPoint(t1));
-        if (t2 > 0)
-            return List.of(ray.getPoint(t2));
+        // Prepare the results
+        List<GeoPoint> result = new LinkedList<>();
 
-        return null;
+        // Only include intersections where t > 0 (in front of the ray origin)
+        if (t1 > 0) {
+            result.add(new GeoPoint(this, ray.getPoint(t1)));
+        }
+        if (t2 > 0) {
+            result.add(new GeoPoint(this, ray.getPoint(t2)));
+        }
+
+        return result.isEmpty() ? null : result;
     }
 }

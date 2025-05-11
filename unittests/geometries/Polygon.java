@@ -4,10 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import primitives.*;
+import geometries.Intersectable.GeoPoint;
 
 /**
  * Testing Polygons
- * @author Dan
  */
 class PolygonTests {
     /**
@@ -50,18 +50,17 @@ class PolygonTests {
         assertThrows(IllegalArgumentException.class, //
                 () -> new Polygon(new Point(0, 0, 1), new Point(1, 0, 0), new Point(0, 1, 0),
                         new Point(0, 0.5, 0.5)),
-                "Constructed a polygon with vertix on a side");
+                "Constructed a polygon with vertex on a side");
 
         // TC11: Last point = first point
         assertThrows(IllegalArgumentException.class, //
                 () -> new Polygon(new Point(0, 0, 1), new Point(1, 0, 0), new Point(0, 1, 0), new Point(0, 0, 1)),
-                "Constructed a polygon with vertice on a side");
+                "Constructed a polygon with last point identical to first point");
 
         // TC12: Co-located points
         assertThrows(IllegalArgumentException.class, //
                 () -> new Polygon(new Point(0, 0, 1), new Point(1, 0, 0), new Point(0, 1, 0), new Point(0, 1, 0)),
-                "Constructed a polygon with vertice on a side");
-
+                "Constructed a polygon with co-located points");
     }
 
     /** Test method for {@link geometries.Polygon#getNormal(primitives.Point)}. */
@@ -86,7 +85,6 @@ class PolygonTests {
 
     /**
      * Test method for {@link geometries.Polygon#findIntersections(primitives.Ray)}.
-     * Since Polygon has no custom intersection logic, it always returns null.
      */
     @Test
     void testFindIntersections() {
@@ -97,14 +95,26 @@ class PolygonTests {
                 new Point(0, 1, 1)
         );
 
-        // Ray intersects the polygon at the center
-        Ray ray = new Ray(new Point(0.5, 0.5, 0), new Vector(0, 0, 1));
-        List<Point> result = polygon.findIntersections(ray);
+        // ============ Equivalence Partitions Tests ==============
 
-        assertNotNull(result, "Expected intersection point");
-        assertEquals(1, result.size(), "Expected exactly one intersection point");
-        assertEquals(new Point(0.5, 0.5, 1), result.getFirst(), "Wrong intersection point");
+        // TC01: Ray intersects the polygon at the center
+        Ray ray1 = new Ray(new Point(0.5, 0.5, 0), new Vector(0, 0, 1));
+        List<GeoPoint> result1 = polygon.findIntersections(ray1);
+
+        assertNotNull(result1, "Expected intersection point");
+        assertEquals(1, result1.size(), "Expected exactly one intersection point");
+        assertEquals(new Point(0.5, 0.5, 1), result1.get(0).point, "Wrong intersection point");
+
+        // TC02: Ray is outside the polygon
+        Ray ray2 = new Ray(new Point(2, 2, 0), new Vector(0, 0, 1));
+        assertNull(polygon.findIntersections(ray2), "Expected no intersection (outside polygon)");
+
+        // TC03: Ray is parallel to the polygon but outside
+        Ray ray3 = new Ray(new Point(0, 0, 2), new Vector(0, 0, 1));
+        assertNull(polygon.findIntersections(ray3), "Expected no intersection (parallel and outside)");
+
+        // TC04: Ray is on the plane but outside the polygon
+        Ray ray4 = new Ray(new Point(-1, -1, 1), new Vector(1, 1, 0));
+        assertNull(polygon.findIntersections(ray4), "Expected no intersection (in plane but outside polygon)");
     }
-
-
 }

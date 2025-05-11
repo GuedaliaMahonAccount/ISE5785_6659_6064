@@ -1,11 +1,12 @@
 package geometries;
 
-import primitives.*;
-
+import primitives.Point;
+import primitives.Ray;
+import primitives.Vector;
 import java.util.List;
-
 import static primitives.Util.alignZero;
 import static primitives.Util.isZero;
+import geometries.Intersectable.GeoPoint;
 
 /**
  * The {@code Plane} class represents a plane in 3D space.
@@ -70,14 +71,18 @@ public class Plane implements Geometry {
         return "Plane{" + q0 + ", " + normal + "}";
     }
 
-
+    /**
+     * Finds all intersection GeoPoints of the ray with this plane.
+     *
+     * @param ray the ray to intersect with
+     * @return list of GeoPoints (geometry + point), or null if none
+     */
     @Override
-    public List<Point> findIntersections(Ray ray) {
+    public List<GeoPoint> findIntersections(Ray ray) {
         Point p0 = ray.getP0();
         Vector v = ray.getDir();
-        Vector n = this.normal;
 
-        double nv = alignZero(n.dotProduct(v));
+        double nv = alignZero(normal.dotProduct(v));
 
         // If the ray is parallel to the plane
         if (isZero(nv)) return null;
@@ -90,14 +95,12 @@ public class Plane implements Geometry {
             return null;
         }
 
-        double t = alignZero(n.dotProduct(q0MinusP0) / nv);
+        double t = alignZero(normal.dotProduct(q0MinusP0) / nv);
 
         // If the intersection point is behind or on the origin
         if (t <= 0) return null;
 
-        // ✅ Use getPoint here
-        return List.of(ray.getPoint(t));
+        // Wrap the intersection point as a GeoPoint
+        return List.of(new GeoPoint(this, ray.getPoint(t)));
     }
-
-
 }
