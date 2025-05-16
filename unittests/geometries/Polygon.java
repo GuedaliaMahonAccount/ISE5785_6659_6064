@@ -99,8 +99,7 @@ class PolygonTests {
 
         // TC01: Ray intersects the polygon at the center
         Ray ray1 = new Ray(new Point(0.5, 0.5, 0), new Vector(0, 0, 1));
-        List<GeoPoint> result1 = polygon.findIntersections(ray1);
-
+        List<GeoPoint> result1 = polygon.findGeoIntersections(ray1);
         assertNotNull(result1, "Expected intersection point");
         assertEquals(1, result1.size(), "Expected exactly one intersection point");
         assertEquals(new Point(0.5, 0.5, 1), result1.get(0).point, "Wrong intersection point");
