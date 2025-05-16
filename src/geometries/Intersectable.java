@@ -1,5 +1,6 @@
 package geometries;
 
+import lighting.LightSource;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Material;
@@ -24,6 +25,7 @@ public abstract class Intersectable {
         public final Ray ray;
         public final double dotProduct;
         public final Vector normal;
+        public LightSource lightSource;
 
         /**
          * Full constructor with all required fields.
@@ -32,14 +34,16 @@ public abstract class Intersectable {
          * @param material the material of the intersected geometry
          * @param ray the ray involved in the intersection
          * @param normal the normal vector at the intersection point
+         * @param lightSource the light source associated with this intersection
          */
-        public Intersection(Geometry geometry, Point point, Material material, Ray ray, Vector normal) {
+        public Intersection(Geometry geometry, Point point, Material material, Ray ray, Vector normal, LightSource lightSource) {
             this.geometry = geometry;
             this.point = point;
             this.material = material != null ? material : new Material();  // Default material
             this.ray = ray;
             this.normal = normal;
             this.dotProduct = (normal != null && ray != null) ? normal.dotProduct(ray.getDir()) : 0;
+            this.lightSource = lightSource;
         }
 
         /**
@@ -48,7 +52,7 @@ public abstract class Intersectable {
          * @param point the intersection point
          */
         public Intersection(Geometry geometry, Point point) {
-            this(geometry, point, null, null, null);
+            this(geometry, point, null, null, null, null);
         }
 
         @Override
