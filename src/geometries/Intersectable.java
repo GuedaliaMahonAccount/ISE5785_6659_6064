@@ -2,6 +2,8 @@ package geometries;
 
 import primitives.Point;
 import primitives.Ray;
+import primitives.Material;
+import primitives.Vector;
 
 import java.util.List;
 
@@ -13,19 +15,40 @@ public abstract class Intersectable {
 
     /**
      * Intersection class that represents a point of intersection and its geometry.
+     * Now includes caching for more efficient light calculations.
      */
     public static class Intersection {
         public final Geometry geometry;
         public final Point point;
+        public final Material material;
+        public final Ray ray;
+        public final double dotProduct;
+        public final Vector normal;
 
         /**
-         * Constructs an Intersection object with the given geometry and point.
-         * @param geometry the geometry object involved in the intersection (compared by reference)
-         * @param point the intersection point (compared using equals)
+         * Full constructor with all required fields.
+         * @param geometry the geometry object involved in the intersection
+         * @param point the intersection point
+         * @param material the material of the intersected geometry
+         * @param ray the ray involved in the intersection
+         * @param normal the normal vector at the intersection point
          */
-        public Intersection(Geometry geometry, Point point) {
+        public Intersection(Geometry geometry, Point point, Material material, Ray ray, Vector normal) {
             this.geometry = geometry;
             this.point = point;
+            this.material = material != null ? material : new Material();  // Default material
+            this.ray = ray;
+            this.normal = normal;
+            this.dotProduct = (normal != null && ray != null) ? normal.dotProduct(ray.getDir()) : 0;
+        }
+
+        /**
+         * Simplified constructor for basic intersections without material, ray, or normal.
+         * @param geometry the geometry object involved in the intersection
+         * @param point the intersection point
+         */
+        public Intersection(Geometry geometry, Point point) {
+            this(geometry, point, null, null, null);
         }
 
         @Override
@@ -38,22 +61,18 @@ public abstract class Intersectable {
 
         @Override
         public String toString() {
-            return "Intersection [geometry=" + geometry + ", point=" + point + "]";
+            return "Intersection [geometry=" + geometry + ", point=" + point +
+                    ", material=" + material + ", dotProduct=" + dotProduct + "]";
         }
     }
 
     /**
-     * GeoPoint class that represents a point on the geometry shape (legacy support).
+     * GeoPoint class for legacy support.
      */
     public static class GeoPoint {
         public Geometry geometry;
         public Point point;
 
-        /**
-         * Constructs a GeoPoint with the given geometry and point.
-         * @param geometry the geometry object
-         * @param point the point on the geometry
-         */
         public GeoPoint(Geometry geometry, Point point) {
             this.geometry = geometry;
             this.point = point;
