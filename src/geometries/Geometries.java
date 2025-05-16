@@ -13,52 +13,57 @@ public class Geometries implements Intersectable {
 
     private final List<Intersectable> geometries = new LinkedList<>();
 
-    /**
-     * Default constructor: creates an empty list of geometries.
-     */
-    public Geometries() {
-        // List is initialized at declaration
-    }
+    public Geometries() {}
 
-    /**
-     * Constructor to initialize with a variable number of geometries.
-     *
-     * @param geometries initial geometries to add
-     */
     public Geometries(Intersectable... geometries) {
         add(geometries);
     }
 
-    /**
-     * Adds one or more geometries to the collection.
-     *
-     * @param geometries geometries to add
-     */
     public void add(Intersectable... geometries) {
         Collections.addAll(this.geometries, geometries);
     }
 
-    /**
-     * Finds all intersection points of the ray with the geometries in the collection.
-     *
-     * @param ray the ray to intersect with
-     * @return list of intersection points, or null if no intersections are found
-     */
-    @Override
-    public List<GeoPoint> findIntersections(Ray ray) {
-        List<GeoPoint> result = null;
+    // New helper method which calls the helper on each geometry and collects Intersection objects
+    public List<Intersection> calculateIntersectionsHelper(Ray ray) {
+        List<Intersection> result = new LinkedList<>();
 
         for (Intersectable geometry : geometries) {
-            List<GeoPoint> intersections = geometry.findIntersections(ray);
-            if (intersections != null) {
-                if (result == null) {
-                    result = new LinkedList<>();
+            if (geometry instanceof Plane) {
+                Plane plane = (Plane) geometry;
+                List<Intersection> list = plane.calculateIntersectionsHelper(ray);
+                if (list != null) result.addAll(list);
+            } else if (geometry instanceof Polygon) {
+                Polygon polygon = (Polygon) geometry;
+                List<Intersection> list = polygon.calculateIntersectionsHelper(ray);
+                if (list != null) result.addAll(list);
+            } else if (geometry instanceof Geometries) {
+                Geometries geoms = (Geometries) geometry;
+                List<Intersection> list = geoms.calculateIntersectionsHelper(ray);
+                if (list != null) result.addAll(list);
+            }
+            // else handle other geometry types similarly or default findIntersections?
+            else {
+                // fallback: use old findIntersections and convert
+                List<GeoPoint> geoPoints = geometry.findIntersections(ray);
+                if (geoPoints != null) {
+                    for (GeoPoint gp : geoPoints) {
+                        result.add(new Intersection(gp.geometry, gp.point));
+                    }
                 }
-                result.addAll(intersections);
             }
         }
 
-        return result;
+        return result.isEmpty() ? null : result;
+    }
+
+    @Override
+    public List<GeoPoint> findIntersections(Ray ray) {
+        List<Intersection> intersections = calculateIntersectionsHelper(ray);
+        if (intersections == null) return null;
+
+        return intersections.stream()
+                .map(i -> new GeoPoint(i.geometry, i.point))
+                .toList();
     }
 
     public boolean isEmpty() {

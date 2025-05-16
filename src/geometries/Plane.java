@@ -4,6 +4,7 @@ import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
 import java.util.List;
+import java.util.Collections;
 import static primitives.Util.alignZero;
 import static primitives.Util.isZero;
 import geometries.Intersectable.GeoPoint;
@@ -13,18 +14,9 @@ import geometries.Intersectable.GeoPoint;
  * It is defined either by three points or by a point and a normal vector.
  */
 public class Plane implements Geometry {
-    /** A point on the plane. */
     private final Point q0;
-    /** The normal vector to the plane. */
     private final Vector normal;
 
-    /**
-     * Constructs a plane from three points.
-     *
-     * @param p1 first point on the plane
-     * @param p2 second point on the plane
-     * @param p3 third point on the plane
-     */
     public Plane(Point p1, Point p2, Point p3) {
         Vector v1 = p2.subtract(p1);
         Vector v2 = p3.subtract(p1);
@@ -32,12 +24,6 @@ public class Plane implements Geometry {
         q0 = p1;
     }
 
-    /**
-     * Constructs a plane from a point and a normal vector.
-     *
-     * @param q0     a point on the plane
-     * @param normal the normal vector to the plane
-     */
     public Plane(Point q0, Vector normal) {
         this.q0 = q0;
         this.normal = normal.normalize();
@@ -48,20 +34,10 @@ public class Plane implements Geometry {
         return normal;
     }
 
-    /**
-     * Returns a point on the plane.
-     *
-     * @return the point q0
-     */
     public Point getQ0() {
         return q0;
     }
 
-    /**
-     * Returns the normal vector of the plane.
-     *
-     * @return the normalized normal vector
-     */
     public Vector getNormal() {
         return normal;
     }
@@ -71,36 +47,39 @@ public class Plane implements Geometry {
         return "Plane{" + q0 + ", " + normal + "}";
     }
 
-    /**
-     * Finds all intersection GeoPoints of the ray with this plane.
-     *
-     * @param ray the ray to intersect with
-     * @return list of GeoPoints (geometry + point), or null if none
-     */
-    @Override
-    public List<GeoPoint> findIntersections(Ray ray) {
+    // New helper method as per instructions - returns list of Intersections with 'this' geometry
+    public List<Intersection> calculateIntersectionsHelper(Ray ray) {
         Point p0 = ray.getP0();
         Vector v = ray.getDir();
 
         double nv = alignZero(normal.dotProduct(v));
-
-        // If the ray is parallel to the plane
-        if (isZero(nv)) return null;
+        if (isZero(nv)) return null; // ray parallel to plane
 
         Vector q0MinusP0;
         try {
             q0MinusP0 = q0.subtract(p0);
         } catch (IllegalArgumentException e) {
-            // The ray starts exactly at q0 → no intersection
+            // ray starts at q0
             return null;
         }
 
         double t = alignZero(normal.dotProduct(q0MinusP0) / nv);
-
-        // If the intersection point is behind or on the origin
         if (t <= 0) return null;
 
-        // Wrap the intersection point as a GeoPoint
-        return List.of(new GeoPoint(this, ray.getPoint(t)));
+        // Return new Intersection object list
+        return List.of(new Intersection(this, ray.getPoint(t)));
+    }
+
+    // Override findIntersections to use new helper
+    @Override
+    public List<GeoPoint> findIntersections(Ray ray) {
+        // Since interface expects GeoPoint, we convert from Intersection to GeoPoint
+        List<Intersection> intersections = calculateIntersectionsHelper(ray);
+        if (intersections == null) return null;
+
+        // Convert List<Intersection> to List<GeoPoint>
+        return intersections.stream()
+                .map(i -> new GeoPoint(this, i.point))
+                .toList();
     }
 }

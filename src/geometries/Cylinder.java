@@ -1,4 +1,3 @@
-// Cylinder.java
 package geometries;
 
 import primitives.Point;
@@ -8,9 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import geometries.Intersectable.GeoPoint;
 
-/**
- * The {@code Cylinder} class represents a finite cylinder with caps.
- */
 public class Cylinder extends Tube {
     private final double height;
 
@@ -25,8 +21,10 @@ public class Cylinder extends Tube {
         return height;
     }
 
-    @Override
-    public List<GeoPoint> findIntersections(Ray ray) {
+    /**
+     * Helper method to calculate intersections returning GeoPoints.
+     */
+    public List<GeoPoint> calculateIntersectionsHelper(Ray ray) {
         Vector axisDir = getAxisRay().getDir();
         Point baseCenter = getAxisRay().getP0();
         Point topCenter = baseCenter.add(axisDir.scale(height));
@@ -36,13 +34,12 @@ public class Cylinder extends Tube {
         // Compute the projection of the ray's origin on the cylinder's axis.
         double originProj = axisDir.dotProduct(ray.getP0().subtract(baseCenter));
 
-        // Determine if the ray is vertical (i.e. parallel to the cylinder's axis)
+        // Determine if the ray is vertical (parallel to the cylinder's axis)
         boolean isVertical = Math.abs(Math.abs(ray.getDir().dotProduct(axisDir)) - 1) < 1e-10;
 
         if (isVertical) {
-            // For vertical rays, we decide based on where the ray starts:
             double dot = ray.getDir().dotProduct(axisDir);
-            if (originProj > height) { // Ray starts above the cylinder: only top cap is hit.
+            if (originProj > height) { // Ray starts above the cylinder
                 Plane topPlane = new Plane(topCenter, axisDir);
                 List<GeoPoint> topIntersections = topPlane.findIntersections(ray);
                 if (topIntersections != null) {
@@ -52,7 +49,7 @@ public class Cylinder extends Tube {
                         }
                     }
                 }
-            } else if (originProj < 0) { // Ray starts below the cylinder: both bottom and top caps are hit.
+            } else if (originProj < 0) { // Ray starts below the cylinder
                 Plane bottomPlane = new Plane(baseCenter, axisDir);
                 List<GeoPoint> bottomIntersections = bottomPlane.findIntersections(ray);
                 if (bottomIntersections != null) {
@@ -71,8 +68,8 @@ public class Cylinder extends Tube {
                         }
                     }
                 }
-            } else { // Ray starts inside the cylinder (between the caps)
-                if (dot > 0) { // Moving upward: exit through the top cap.
+            } else { // Ray starts inside the cylinder
+                if (dot > 0) { // Moving upward: exit through top cap
                     Plane topPlane = new Plane(topCenter, axisDir);
                     List<GeoPoint> topIntersections = topPlane.findIntersections(ray);
                     if (topIntersections != null) {
@@ -82,7 +79,7 @@ public class Cylinder extends Tube {
                             }
                         }
                     }
-                } else if (dot < 0) { // Moving downward: exit through the bottom cap.
+                } else if (dot < 0) { // Moving downward: exit through bottom cap
                     Plane bottomPlane = new Plane(baseCenter, axisDir);
                     List<GeoPoint> bottomIntersections = bottomPlane.findIntersections(ray);
                     if (bottomIntersections != null) {
@@ -95,8 +92,8 @@ public class Cylinder extends Tube {
                 }
             }
         } else {
-            // Non-vertical rays:
-            // 1. Get side intersections from the tube and filter by the cylinder's height.
+            // Non-vertical rays
+            // 1. Side intersections filtered by height
             List<GeoPoint> sideIntersections = super.findIntersections(ray);
             if (sideIntersections != null) {
                 for (GeoPoint gp : sideIntersections) {
@@ -106,7 +103,7 @@ public class Cylinder extends Tube {
                     }
                 }
             }
-            // 2. Also compute intersections with both caps.
+            // 2. Caps intersections
             Plane bottomPlane = new Plane(baseCenter, axisDir);
             List<GeoPoint> bottomIntersections = bottomPlane.findIntersections(ray);
             if (bottomIntersections != null) {
@@ -128,6 +125,14 @@ public class Cylinder extends Tube {
         }
 
         return result.isEmpty() ? null : result;
+    }
+
+    /**
+     * New findIntersections method, calls calculateIntersectionsHelper.
+     */
+    @Override
+    public List<GeoPoint> findIntersections(Ray ray) {
+        return calculateIntersectionsHelper(ray);
     }
 
     @Override

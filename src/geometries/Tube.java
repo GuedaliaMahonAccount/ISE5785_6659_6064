@@ -6,6 +6,7 @@ import primitives.Vector;
 
 import java.util.LinkedList;
 import java.util.List;
+
 import static primitives.Util.isZero;
 import geometries.Intersectable.GeoPoint;
 
@@ -60,7 +61,14 @@ public class Tube extends RadialGeometry {
     }
 
     @Override
-    public List<GeoPoint> findIntersections(Ray ray) {
+    public final List<Point> findIntersections(Ray ray) {
+        List<GeoPoint> geoPoints = calculateIntersectionsHelper(ray);
+        if (geoPoints == null) return null;
+        return geoPoints.stream().map(gp -> gp.point).toList();
+    }
+
+    @Override
+    protected List<GeoPoint> calculateIntersectionsHelper(Ray ray) {
         Point p0 = ray.getP0();
         Vector v = ray.getDir();
 
@@ -72,28 +80,14 @@ public class Tube extends RadialGeometry {
         // Check if ray is parallel to tube axis - handle separately
         double vDotVa = v.dotProduct(va);
         if (Math.abs(Math.abs(vDotVa) - 1) < 1e-10) {
-            // Ray is parallel to tube axis
-            // Calculate distance from ray to axis
             Vector cross = deltaP.crossProduct(va);
             double distanceSquared = cross.lengthSquared() / va.lengthSquared();
 
-            if (Math.abs(distanceSquared - radius * radius) < 1e-10) {
-                // Ray is on the tube surface
+            if (Math.abs(distanceSquared - radius * radius) < 1e-10 || distanceSquared > radius * radius) {
                 return null;
             }
-            if (distanceSquared > radius * radius) {
-                // Ray is outside the tube
-                return null;
-            }
-            // Ray is inside the tube and parallel - no side intersections
             return null;
         }
-
-        // Ray is not parallel to the axis, solve quadratic equation
-        // We need to find where the ray intersects the infinite cylinder
-
-        // Calculate the coefficients for the quadratic equation
-        // We're finding where ||p0 + tv - (pa + (va·(p0 + tv - pa))va)|| = r
 
         // Component of deltaP perpendicular to va
         Vector deltaPPerp = deltaP;
@@ -113,24 +107,17 @@ public class Tube extends RadialGeometry {
         double b = 2 * vPerp.dotProduct(deltaPPerp);
         double c = deltaPPerp.lengthSquared() - radius * radius;
 
-        // If a is very small, the ray is nearly parallel to the axis
-        if (isZero(a)) {
-            return null;
-        }
+        if (isZero(a)) return null;
 
-        // Discriminant check
         double discriminant = b * b - 4 * a * c;
-        if (discriminant <= 0) return null; // No real solutions
+        if (discriminant <= 0) return null;
 
-        // Calculate intersection parameter values
         double sqrtDisc = Math.sqrt(discriminant);
         double t1 = (-b - sqrtDisc) / (2 * a);
         double t2 = (-b + sqrtDisc) / (2 * a);
 
-        // Prepare the results
         List<GeoPoint> result = new LinkedList<>();
 
-        // Only include intersections where t > 0 (in front of the ray origin)
         if (t1 > 0) {
             result.add(new GeoPoint(this, ray.getPoint(t1)));
         }

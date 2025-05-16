@@ -7,21 +7,10 @@ import java.util.List;
 import static primitives.Util.alignZero;
 import geometries.Intersectable.GeoPoint;
 
-/**
- * The {@code Sphere} class represents a sphere in 3D space.
- * It is defined by a center point and a radius.
- */
 public class Sphere extends RadialGeometry {
-    /** The center point of the sphere. */
     private final Point center;
 
-    /**
-     * Constructs a sphere with a given radius and center.
-     *
-     * @param radius the radius of the sphere
-     * @param center the center point of the sphere
-     */
-    public Sphere(Point center,double radius) {
+    public Sphere(Point center, double radius) {
         super(radius);
         if (radius <= 0) {
             throw new IllegalArgumentException("Radius must be positive");
@@ -32,11 +21,6 @@ public class Sphere extends RadialGeometry {
         this.center = center;
     }
 
-    /**
-     * Returns the center point of the sphere.
-     *
-     * @return the center
-     */
     public Point getCenter() {
         return center;
     }
@@ -56,22 +40,17 @@ public class Sphere extends RadialGeometry {
     }
 
     /**
-     * Finds all intersection GeoPoints of the ray with this sphere.
-     *
-     * @param ray the ray to intersect with
-     * @return list of GeoPoints (geometry + point), or null if none
+     * Helper method to calculate intersections returning GeoPoints.
      */
-    @Override
-    public List<GeoPoint> findIntersections(Ray ray) {
+    public List<GeoPoint> calculateIntersectionsHelper(Ray ray) {
         Point p0 = ray.getP0();
         Vector v = ray.getDir();
 
-        // u = vector from ray origin to sphere center
         Vector u;
         try {
             u = center.subtract(p0);
         } catch (IllegalArgumentException e) {
-            // Ray starts at the center → single intersection at radius
+            // Ray starts at the center → single intersection at radius distance
             return List.of(new GeoPoint(this, ray.getPoint(radius)));
         }
 
@@ -86,7 +65,6 @@ public class Sphere extends RadialGeometry {
         double t1 = alignZero(tm - th);
         double t2 = alignZero(tm + th);
 
-        // build GeoPoint list depending on positive ts
         if (t1 > 0 && t2 > 0) {
             return List.of(
                     new GeoPoint(this, ray.getPoint(t1)),
@@ -100,5 +78,13 @@ public class Sphere extends RadialGeometry {
             return List.of(new GeoPoint(this, ray.getPoint(t2)));
         }
         return null;
+    }
+
+    /**
+     * New findIntersections method, calls calculateIntersectionsHelper and returns GeoPoints.
+     */
+    @Override
+    public List<GeoPoint> findIntersections(Ray ray) {
+        return calculateIntersectionsHelper(ray);
     }
 }
