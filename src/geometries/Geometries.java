@@ -43,6 +43,10 @@ public class Geometries extends Intersectable {
         return result.isEmpty() ? null : result;
     }
 
+    public boolean isEmpty() {
+        return geometries.isEmpty();
+    }
+
     @Override
     public String toString() {
         return "Geometries" + geometries;

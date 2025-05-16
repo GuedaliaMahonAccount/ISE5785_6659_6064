@@ -4,9 +4,11 @@ import org.junit.jupiter.api.Test;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
+
 import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
-import geometries.Intersectable.GeoPoint;
+import geometries.Intersectable.Intersection;
 
 /**
  * Unit tests for geometries.Sphere class
@@ -14,31 +16,31 @@ import geometries.Intersectable.GeoPoint;
 class SphereTests {
 
     /**
-     * Test method for {@link geometries.Sphere#Sphere(double, primitives.Point)}.
+     * Test method for {@link geometries.Sphere#Sphere(primitives.Point, double)}.
      */
     @Test
     void testConstructor() {
         // ============ Equivalence Partitions Tests ==============
 
         // TC01: Valid sphere with positive radius
-        assertDoesNotThrow(() -> new Sphere(1.0, new Point(0, 0, 0)),
+        assertDoesNotThrow(() -> new Sphere(new Point(0, 0, 0), 1.0),
                 "Failed constructing a valid sphere");
 
         // =============== Boundary Values Tests ==================
 
         // TC10: Zero radius
         assertThrows(IllegalArgumentException.class,
-                () -> new Sphere(0, new Point(0, 0, 0)),
+                () -> new Sphere(new Point(0, 0, 0), 0),
                 "Constructed a sphere with radius = 0");
 
         // TC11: Negative radius
         assertThrows(IllegalArgumentException.class,
-                () -> new Sphere(-2.0, new Point(0, 0, 0)),
+                () -> new Sphere(new Point(0, 0, 0), -2.0),
                 "Constructed a sphere with negative radius");
 
-        // TC12: Null center point (if constructor handles it)
+        // TC12: Null center point
         assertThrows(IllegalArgumentException.class,
-                () -> new Sphere(1.0, null),
+                () -> new Sphere(null, 1.0),
                 "Constructed a sphere with null center point");
     }
 
@@ -47,10 +49,8 @@ class SphereTests {
      */
     @Test
     void getCenter() {
-        // ============ Equivalence Partitions Tests ==============
-        // TC01: Get center after construction
         Point center = new Point(0, 0, 0);
-        Sphere sphere = new Sphere(1.0, center);
+        Sphere sphere = new Sphere(center, 1.0);
         assertEquals(center, sphere.getCenter(), "getCenter() returned incorrect center point");
     }
 
@@ -59,17 +59,13 @@ class SphereTests {
      */
     @Test
     void getNormal() {
-        // ============ Equivalence Partitions Tests ==============
+        Point center = new Point(0, 0, 0);
+        Sphere sphere = new Sphere(center, 1.0);
 
         // TC01: Point on surface (1,0,0), normal should be (1,0,0)
-        Point center = new Point(0, 0, 0);
-        Sphere sphere = new Sphere(1.0, center);
         Point surfacePoint = new Point(1, 0, 0);
         Vector expectedNormal = new Vector(1, 0, 0);
-        Vector actualNormal = sphere.getNormal(surfacePoint);
-        assertEquals(expectedNormal, actualNormal, "getNormal() returned incorrect normal vector");
-
-        // =============== Boundary Values Tests ==================
+        assertEquals(expectedNormal, sphere.getNormal(surfacePoint), "getNormal() returned incorrect normal vector");
 
         // TC11: Point exactly on top (0,1,0)
         Point topPoint = new Point(0, 1, 0);
@@ -88,13 +84,13 @@ class SphereTests {
      */
     @Test
     void testFindIntersections() {
-        Sphere sphere = new Sphere(1.0, new Point(0, 0, 0));
+        Sphere sphere = new Sphere(new Point(0, 0, 0), 1.0);
 
         // ============ Equivalence Partitions Tests ==============
 
         // TC01: Ray starts outside and intersects the sphere at two points
         Ray ray1 = new Ray(new Point(-2, 0, 0), new Vector(1, 0, 0));
-        List<GeoPoint> result1 = sphere.findIntersections(ray1);
+        List<Intersection> result1 = sphere.findIntersections(ray1);
         assertNotNull(result1, "Expected intersections but got null");
         assertEquals(2, result1.size(), "Expected two intersection points");
 
@@ -111,7 +107,7 @@ class SphereTests {
 
         // TC03: Ray starts inside the sphere (1 point)
         Ray ray3 = new Ray(new Point(0.5, 0, 0), new Vector(1, 0, 0));
-        List<GeoPoint> result3 = sphere.findIntersections(ray3);
+        List<Intersection> result3 = sphere.findIntersections(ray3);
         assertEquals(1, result3.size(), "Expected one intersection (ray exits sphere)");
         assertEquals(new Point(1, 0, 0), result3.get(0).point, "Wrong exit point");
 
@@ -127,13 +123,13 @@ class SphereTests {
 
         // TC12: Ray starts at sphere surface and goes inside (1 intersection)
         Ray ray6 = new Ray(new Point(1, 0, 0), new Vector(-1, 0, 0));
-        List<GeoPoint> result6 = sphere.findIntersections(ray6);
+        List<Intersection> result6 = sphere.findIntersections(ray6);
         assertEquals(1, result6.size(), "Expected one intersection (from surface inward)");
         assertEquals(new Point(-1, 0, 0), result6.get(0).point, "Wrong exit point");
 
         // TC13: Ray starts at center (1 intersection)
         Ray ray7 = new Ray(new Point(0, 0, 0), new Vector(0, 1, 0));
-        List<GeoPoint> result7 = sphere.findIntersections(ray7);
+        List<Intersection> result7 = sphere.findIntersections(ray7);
         assertEquals(1, result7.size(), "Expected one intersection from center");
         assertEquals(new Point(0, 1, 0), result7.get(0).point, "Wrong exit point");
 
