@@ -8,6 +8,7 @@ import geometries.Intersectable.GeoPoint;
 import geometries.Intersectable.Intersection;
 import java.util.List;
 
+
 /**
  * A simple ray tracer that returns ambient light or background color.
  * Implements basic traceRay with intersection detection and ambient shading.
