@@ -6,12 +6,12 @@ package primitives;
  */
 public class Material {
 
-    public Double3 kA = Double3.ONE; // Default to fully attenuated
-    public Double3 kD = Double3.ZERO;
-    public Double3 kS = Double3.ZERO;
-    public Double3 kT = Double3.ZERO; // Transparency factor
-    public Double3 kR = Double3.ZERO; // Reflection factor
-    public int shininess = 0;
+    private Double3 kA = Double3.ONE; // Ambient attenuation (default full)
+    private Double3 kD = Double3.ZERO; // Diffuse attenuation
+    private Double3 kS = Double3.ZERO; // Specular attenuation
+    private Double3 kT = Double3.ZERO; // Transparency factor
+    private Double3 kR = Double3.ZERO; // Reflection factor
+    private int shininess = 0; // Shininess factor
 
     /**
      * Sets the ambient attenuation factor (kA).
@@ -114,8 +114,8 @@ public class Material {
     }
 
     /**
-     * Sets the shininess parameter.
-     * @param shininess The shininess of the material
+     * Sets the shininess parameter (nSh).
+     * @param shininess The shininess of the material (nSh)
      * @return the Material object
      */
     public Material setShininess(int shininess) {
