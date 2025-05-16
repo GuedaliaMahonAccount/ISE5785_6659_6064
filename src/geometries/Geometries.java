@@ -23,9 +23,12 @@ public class Geometries extends Intersectable {
         this.geometries = new LinkedList<>(Arrays.asList(geometries));
     }
 
-    /** Add another geometry to this group. */
-    public void add(Intersectable geometry) {
-        this.geometries.add(geometry);
+    /**
+     * Add one or more geometries to this group.
+     * @param geometries the geometries to add
+     */
+    public void add(Intersectable... geometries) {
+        this.geometries.addAll(Arrays.asList(geometries));
     }
 
     /**
@@ -43,6 +46,10 @@ public class Geometries extends Intersectable {
         return result.isEmpty() ? null : result;
     }
 
+    /**
+     * Check if there are no geometries in the group.
+     * @return true if empty, false otherwise
+     */
     public boolean isEmpty() {
         return geometries.isEmpty();
     }
