@@ -26,7 +26,6 @@ public class SimpleRayTracer extends RayTracerBase {
     /**
      * Traces a ray through the scene, returns background if no hit,
      * otherwise finds closest intersection and computes its color.
-     * Uses calculateIntersections and findClosestIntersection.
      * @param ray the ray to trace
      * @return the computed color
      */
@@ -68,19 +67,23 @@ public class SimpleRayTracer extends RayTracerBase {
 
     /**
      * Calculates the color at the intersection point.
-     * This method combines the ambient light and the emission color
-     * @param intersection
-     * @return
-     * the color at the intersection point
+     * This method combines the ambient light and the emission color,
+     * and multiplies the ambient light by the material's kA factor.
+     *
+     * @param intersection the intersection information
+     * @return the color at the intersection point
      */
     private Color calcColor(Intersection intersection) {
-        // Get ambient light color
-        Color ambient = scene.getAmbientLight().getIntensity();
+        Geometry geometry = (Geometry) intersection.geometry;
 
-        // Get the emission color from the intersected geometry
-        Color emission = ((Geometry)intersection.geometry).getEmission();
+        // Get ambient light and scale it by material's kA
+        Color ambient = scene.getAmbientLight().getIntensity()
+                .scale(geometry.getMaterial().kA);
 
-        // Combine ambient and emission colors
+        // Get emission color
+        Color emission = geometry.getEmission();
+
+        // Combine ambient and emission
         return ambient.add(emission);
     }
 }
