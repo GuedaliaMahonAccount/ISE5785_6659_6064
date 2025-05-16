@@ -62,7 +62,7 @@ public class SceneBuilder {
             Element sphereElement = (Element) spheres.item(i);
             Point center = parsePoint(sphereElement.getAttribute("center"));
             double radius = Double.parseDouble(sphereElement.getAttribute("radius"));
-            geometries.add(new Sphere(radius, center));
+            geometries.add(new Sphere(center,radius));
         }
 
         NodeList triangles = sceneElement.getElementsByTagName("triangle");
