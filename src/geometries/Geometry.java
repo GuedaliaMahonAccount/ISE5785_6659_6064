@@ -5,63 +5,66 @@ import primitives.Material;
 import primitives.Vector;
 import primitives.Point;
 
-import java.util.List;
-
 /**
- * Geometry interface represents all the geometric shapes
+ * Geometry abstract class represents all the geometric shapes
  */
-public abstract class Geometry extends Intersectable
-{
-
-    protected Color emission = Color.BLACK;
-
-    private Material material = new Material();
+public abstract class Geometry extends Intersectable {
 
     /**
-     * Getter for the emission of the body
-     *
-     * @return the emission of the body
+     * The emission color of the geometry.
      */
-    public Color getEmission()
-    {
+    protected Color emission = Color.BLACK;
+
+    /**
+     * The material of the geometry.
+     */
+    private Material material = new Material(); // Default initialization
+
+    /**
+     * Gets the emission color of the geometry.
+     *
+     * @return the emission color
+     */
+    public Color getEmission() {
         return emission;
     }
 
     /**
-     * Setter for the emission of the body
+     * Sets the emission color of the geometry.
      *
-     * @param emission the emission of the body
-     * @return the body
+     * @param emission the new emission color
+     * @return the geometry itself (for method chaining)
      */
-    public Geometry setEmission(Color emission)
-    {
+    public Geometry setEmission(Color emission) {
         this.emission = emission;
         return this;
     }
 
-
     /**
-     * @param p the function's Point parameter
-     * @return normal vector on the body from the Point parameter
+     * Gets the normal vector to the geometry at a given point.
+     *
+     * @param p the point on the geometry
+     * @return the normal vector
      */
     public abstract Vector getNormal(Point p);
 
     /**
-     * Get the material of this object
-     * @return the material of this object
+     * Gets the material of the geometry.
+     *
+     * @return the material of the geometry
      */
     public Material getMaterial() {
         return material;
     }
 
     /**
-     * Sets the material of the geometry
+     * Sets the material of the geometry.
+     *
      * @param material the material to set
-     * @return the updated geometry with the new material
+     * @return the geometry itself (for method chaining)
      */
     public Geometry setMaterial(Material material) {
         this.material = material;
         return this;
     }
-
 }
