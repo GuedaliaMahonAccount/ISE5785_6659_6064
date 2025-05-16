@@ -1,5 +1,6 @@
 package renderer;
 
+import geometries.Geometry;
 import primitives.Color;
 import primitives.Ray;
 import primitives.Point;
@@ -66,19 +67,20 @@ public class SimpleRayTracer extends RayTracerBase {
     }
 
     /**
-     * Calculates the color at the given intersection.
-     * Adds a turquoise (teal) glowing effect to the color.
-     * @param intersection the intersection containing geometry and point info
-     * @return resulting color with ambient light and glow added
+     * Calculates the color at the intersection point.
+     * This method combines the ambient light and the emission color
+     * @param intersection
+     * @return
+     * the color at the intersection point
      */
     private Color calcColor(Intersection intersection) {
         // Get ambient light color
         Color ambient = scene.getAmbientLight().getIntensity();
 
-        // Define a turquoise (glowing) color to add to the point color
-        Color turquoiseGlow = new Color(0, 255, 255); // RGB for cyan/turquoise glow
+        // Get the emission color from the intersected geometry
+        Color emission = ((Geometry)intersection.geometry).getEmission();
 
-        // Combine ambient and glow colors
-        return ambient.add(turquoiseGlow);
+        // Combine ambient and emission colors
+        return ambient.add(emission);
     }
 }
