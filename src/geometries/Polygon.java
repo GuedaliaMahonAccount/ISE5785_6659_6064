@@ -42,17 +42,18 @@ public class Polygon extends Geometry {
    @Override
    public Vector getNormal(Point point) { return plane.getNormal(point); }
 
-   // New helper method calling old polygon intersection logic but returning Intersection objects list
-   public List<Intersection> calculateIntersectionsHelper(Ray ray) {
-      // Polygon intersection means intersecting with the plane first
-      List<GeoPoint> planeIntersections = plane.findIntersections(ray);
+   @Override
+   protected List<Intersectable.Intersection> calculateIntersectionsHelper(Ray ray) {
+      // Intersect with the plane first
+      List<GeoPoint> planeIntersections = plane.findGeoIntersections(ray);
       if (planeIntersections == null) return null;
 
-      GeoPoint planeIntersection = planeIntersections.get(0);
+      GeoPoint planeIntersection = planeIntersections.getFirst();
       Point p = planeIntersection.point;
 
       Vector n = plane.getNormal();
 
+      // Check if the intersection is inside the polygon
       for (int i = 0; i < size; i++) {
          Point vi = vertices.get(i);
          Point vj = vertices.get((i + 1) % size);
@@ -63,20 +64,12 @@ public class Polygon extends Geometry {
          Vector cross = edge.crossProduct(vp);
          double sign = alignZero(cross.dotProduct(n));
 
+         // If the point is outside the polygon
          if (sign < 0) return null;
       }
 
-      return List.of(new Intersection(this, p));
+      // Return the intersection as an Intersectable.Intersection
+      return List.of(new Intersectable.Intersection(this, p));
    }
 
-   // Override findIntersections to use new helper and convert to GeoPoint
-   @Override
-   public List<GeoPoint> findIntersections(Ray ray) {
-      List<Intersection> intersections = calculateIntersectionsHelper(ray);
-      if (intersections == null) return null;
-
-      return intersections.stream()
-              .map(i -> new GeoPoint(this, i.point))
-              .toList();
-   }
 }

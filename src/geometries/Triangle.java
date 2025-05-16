@@ -38,10 +38,13 @@ public class Triangle extends Polygon {
      */
     @Override
     protected List<Intersection> calculateIntersectionsHelper(Ray ray) {
-        // Step 1: Intersect with the plane
-        var planeIntersections = plane.findIntersections(ray);
-        if (planeIntersections == null) return null;
+        // Step 1: Intersect with the underlying plane, using the new API:
+        List<Intersection> planeIntersections = plane.calculateIntersections(ray);
+        if (planeIntersections == null) {
+            return null;
+        }
 
+        // We only need the first hit
         Point p = planeIntersections.get(0).point;
         Point p0 = ray.getP0();
         Vector dir = ray.getDir();
@@ -70,8 +73,8 @@ public class Triangle extends Polygon {
         boolean allNegative = s1 < 0 && s2 < 0 && s3 < 0;
 
         // If point is inside the triangle, return intersection
-        return (allPositive || allNegative) ?
-                List.of(new Intersection(this, p)) :
-                null;
+        return (allPositive || allNegative)
+                ? List.of(new Intersection(this, p))
+                : null;
     }
 }

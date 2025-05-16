@@ -4,8 +4,8 @@ import primitives.Color;
 import primitives.Ray;
 import primitives.Point;
 import scene.Scene;
-import geometries.Intersectable.GeoPoint;
 import geometries.Intersectable.Intersection;
+
 import java.util.List;
 
 /**
@@ -31,8 +31,8 @@ public class SimpleRayTracer extends RayTracerBase {
      */
     @Override
     public Color traceRay(Ray ray) {
-        // Calculate all intersections using the new method
-        List<Intersection> intersections = calculateIntersections(ray);
+        // Now call calculateIntersections (returns List<Intersection>)
+        List<Intersection> intersections = scene.getGeometries().calculateIntersections(ray);
 
         // No hit: return background color
         if (intersections == null || intersections.isEmpty()) {
@@ -44,16 +44,6 @@ public class SimpleRayTracer extends RayTracerBase {
 
         // Compute shading color using the updated calcColor method
         return calcColor(closestIntersection);
-    }
-
-    /**
-     * Calculates all intersections of the ray with the scene's geometries.
-     * This method delegates to the scene geometries intersection function.
-     * @param ray the ray to check intersections for
-     * @return list of all intersections or null if none
-     */
-    private List<Intersection> calculateIntersections(Ray ray) {
-        return scene.getGeometries().findIntersections(ray);
     }
 
     /**

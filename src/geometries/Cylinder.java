@@ -3,17 +3,21 @@ package geometries;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
+
 import java.util.LinkedList;
 import java.util.List;
-import geometries.Intersectable.GeoPoint;
 
+/**
+ * A finite cylinder: a Tube of given radius and finite height, with two circular caps.
+ */
 public class Cylinder extends Tube {
     private final double height;
 
     public Cylinder(double radius, Ray axisRay, double height) {
         super(radius, axisRay);
-        if (height <= 0)
+        if (height <= 0) {
             throw new IllegalArgumentException("Height must be positive");
+        }
         this.height = height;
     }
 
@@ -21,104 +25,108 @@ public class Cylinder extends Tube {
         return height;
     }
 
-    /**
-     * Helper method to calculate intersections returning GeoPoints.
-     */
-    public List<GeoPoint> calculateIntersectionsHelper(Ray ray) {
-        Vector axisDir = getAxisRay().getDir();
-        Point baseCenter = getAxisRay().getP0();
-        Point topCenter = baseCenter.add(axisDir.scale(height));
-        double radiusSq = getRadius() * getRadius();
-        List<GeoPoint> result = new LinkedList<>();
+    @Override
+    protected List<Intersectable.Intersection> calculateIntersectionsHelper(Ray ray) {
+        Vector axisDir   = getAxisRay().getDir();
+        Point  baseCenter = getAxisRay().getP0();
+        Point  topCenter  = baseCenter.add(axisDir.scale(height));
+        double radiusSq   = getRadius() * getRadius();
 
-        // Compute the projection of the ray's origin on the cylinder's axis.
+        List<Intersectable.Intersection> result = new LinkedList<>();
+
+        // Projection of ray origin on cylinder axis
         double originProj = axisDir.dotProduct(ray.getP0().subtract(baseCenter));
 
-        // Determine if the ray is vertical (parallel to the cylinder's axis)
+        // Check if ray is parallel to axis
         boolean isVertical = Math.abs(Math.abs(ray.getDir().dotProduct(axisDir)) - 1) < 1e-10;
 
+        // Prepare cap-planes once
+        Plane bottomPlane = new Plane(baseCenter, axisDir);
+        Plane topPlane    = new Plane(topCenter, axisDir);
+
         if (isVertical) {
-            double dot = ray.getDir().dotProduct(axisDir);
-            if (originProj > height) { // Ray starts above the cylinder
-                Plane topPlane = new Plane(topCenter, axisDir);
-                List<GeoPoint> topIntersections = topPlane.findIntersections(ray);
-                if (topIntersections != null) {
-                    for (GeoPoint gp : topIntersections) {
-                        if (gp.point.subtract(topCenter).lengthSquared() <= radiusSq) {
-                            result.add(new GeoPoint(this, gp.point));
+            double dirProj = ray.getDir().dotProduct(axisDir);
+
+            if (originProj > height) {
+                // Starts above → only top cap
+                var topHits = topPlane.calculateIntersectionsHelper(ray);
+                if (topHits != null) {
+                    for (var h : topHits) {
+                        if (h.point.subtract(topCenter).lengthSquared() <= radiusSq) {
+                            result.add(new Intersectable.Intersection(this, h.point));
                         }
                     }
                 }
-            } else if (originProj < 0) { // Ray starts below the cylinder
-                Plane bottomPlane = new Plane(baseCenter, axisDir);
-                List<GeoPoint> bottomIntersections = bottomPlane.findIntersections(ray);
-                if (bottomIntersections != null) {
-                    for (GeoPoint gp : bottomIntersections) {
-                        if (gp.point.subtract(baseCenter).lengthSquared() <= radiusSq) {
-                            result.add(new GeoPoint(this, gp.point));
+            }
+            else if (originProj < 0) {
+                // Starts below → bottom then top
+                var botHits = bottomPlane.calculateIntersectionsHelper(ray);
+                if (botHits != null) {
+                    for (var h : botHits) {
+                        if (h.point.subtract(baseCenter).lengthSquared() <= radiusSq) {
+                            result.add(new Intersectable.Intersection(this, h.point));
                         }
                     }
                 }
-                Plane topPlane = new Plane(topCenter, axisDir);
-                List<GeoPoint> topIntersections = topPlane.findIntersections(ray);
-                if (topIntersections != null) {
-                    for (GeoPoint gp : topIntersections) {
-                        if (gp.point.subtract(topCenter).lengthSquared() <= radiusSq) {
-                            result.add(new GeoPoint(this, gp.point));
+                var topHits = topPlane.calculateIntersectionsHelper(ray);
+                if (topHits != null) {
+                    for (var h : topHits) {
+                        if (h.point.subtract(topCenter).lengthSquared() <= radiusSq) {
+                            result.add(new Intersectable.Intersection(this, h.point));
                         }
                     }
                 }
-            } else { // Ray starts inside the cylinder
-                if (dot > 0) { // Moving upward: exit through top cap
-                    Plane topPlane = new Plane(topCenter, axisDir);
-                    List<GeoPoint> topIntersections = topPlane.findIntersections(ray);
-                    if (topIntersections != null) {
-                        for (GeoPoint gp : topIntersections) {
-                            if (gp.point.subtract(topCenter).lengthSquared() <= radiusSq) {
-                                result.add(new GeoPoint(this, gp.point));
+            }
+            else {
+                // Starts inside → exit through one cap
+                if (dirProj > 0) {
+                    var topHits = topPlane.calculateIntersectionsHelper(ray);
+                    if (topHits != null) {
+                        for (var h : topHits) {
+                            if (h.point.subtract(topCenter).lengthSquared() <= radiusSq) {
+                                result.add(new Intersectable.Intersection(this, h.point));
                             }
                         }
                     }
-                } else if (dot < 0) { // Moving downward: exit through bottom cap
-                    Plane bottomPlane = new Plane(baseCenter, axisDir);
-                    List<GeoPoint> bottomIntersections = bottomPlane.findIntersections(ray);
-                    if (bottomIntersections != null) {
-                        for (GeoPoint gp : bottomIntersections) {
-                            if (gp.point.subtract(baseCenter).lengthSquared() <= radiusSq) {
-                                result.add(new GeoPoint(this, gp.point));
+                }
+                else if (dirProj < 0) {
+                    var botHits = bottomPlane.calculateIntersectionsHelper(ray);
+                    if (botHits != null) {
+                        for (var h : botHits) {
+                            if (h.point.subtract(baseCenter).lengthSquared() <= radiusSq) {
+                                result.add(new Intersectable.Intersection(this, h.point));
                             }
                         }
                     }
                 }
             }
-        } else {
-            // Non-vertical rays
-            // 1. Side intersections filtered by height
-            List<GeoPoint> sideIntersections = super.findIntersections(ray);
-            if (sideIntersections != null) {
-                for (GeoPoint gp : sideIntersections) {
-                    double proj = axisDir.dotProduct(gp.point.subtract(baseCenter));
+        }
+        else {
+            // 1. Side-intersections
+            var sideHits = super.calculateIntersectionsHelper(ray);
+            if (sideHits != null) {
+                for (var h : sideHits) {
+                    double proj = axisDir.dotProduct(h.point.subtract(baseCenter));
                     if (proj >= 0 && proj <= height) {
-                        result.add(new GeoPoint(this, gp.point));
+                        result.add(new Intersectable.Intersection(this, h.point));
                     }
                 }
             }
-            // 2. Caps intersections
-            Plane bottomPlane = new Plane(baseCenter, axisDir);
-            List<GeoPoint> bottomIntersections = bottomPlane.findIntersections(ray);
-            if (bottomIntersections != null) {
-                for (GeoPoint gp : bottomIntersections) {
-                    if (gp.point.subtract(baseCenter).lengthSquared() <= radiusSq) {
-                        result.add(new GeoPoint(this, gp.point));
+            // 2. Bottom cap
+            var botHits = bottomPlane.calculateIntersectionsHelper(ray);
+            if (botHits != null) {
+                for (var h : botHits) {
+                    if (h.point.subtract(baseCenter).lengthSquared() <= radiusSq) {
+                        result.add(new Intersectable.Intersection(this, h.point));
                     }
                 }
             }
-            Plane topPlane = new Plane(topCenter, axisDir);
-            List<GeoPoint> topIntersections = topPlane.findIntersections(ray);
-            if (topIntersections != null) {
-                for (GeoPoint gp : topIntersections) {
-                    if (gp.point.subtract(topCenter).lengthSquared() <= radiusSq) {
-                        result.add(new GeoPoint(this, gp.point));
+            // 3. Top cap
+            var topHits = topPlane.calculateIntersectionsHelper(ray);
+            if (topHits != null) {
+                for (var h : topHits) {
+                    if (h.point.subtract(topCenter).lengthSquared() <= radiusSq) {
+                        result.add(new Intersectable.Intersection(this, h.point));
                     }
                 }
             }
@@ -127,16 +135,12 @@ public class Cylinder extends Tube {
         return result.isEmpty() ? null : result;
     }
 
-    /**
-     * New findIntersections method, calls calculateIntersectionsHelper.
-     */
-    @Override
-    public List<GeoPoint> findIntersections(Ray ray) {
-        return calculateIntersectionsHelper(ray);
-    }
-
     @Override
     public String toString() {
-        return "Cylinder{" + getAxisRay() + ", r=" + getRadius() + ", h=" + height + "}";
+        return "Cylinder{" +
+                "axis=" + getAxisRay() +
+                ", radius=" + getRadius() +
+                ", height=" + height +
+                '}';
     }
 }

@@ -61,14 +61,7 @@ public class Tube extends RadialGeometry {
     }
 
     @Override
-    public final List<Point> findIntersections(Ray ray) {
-        List<GeoPoint> geoPoints = calculateIntersectionsHelper(ray);
-        if (geoPoints == null) return null;
-        return geoPoints.stream().map(gp -> gp.point).toList();
-    }
-
-    @Override
-    protected List<GeoPoint> calculateIntersectionsHelper(Ray ray) {
+    protected List<Intersectable.Intersection> calculateIntersectionsHelper(Ray ray) {
         Point p0 = ray.getP0();
         Vector v = ray.getDir();
 
@@ -77,7 +70,7 @@ public class Tube extends RadialGeometry {
 
         Vector deltaP = p0.subtract(pa);
 
-        // Check if ray is parallel to tube axis - handle separately
+        // Check if ray is parallel to tube axis
         double vDotVa = v.dotProduct(va);
         if (Math.abs(Math.abs(vDotVa) - 1) < 1e-10) {
             Vector cross = deltaP.crossProduct(va);
@@ -116,15 +109,17 @@ public class Tube extends RadialGeometry {
         double t1 = (-b - sqrtDisc) / (2 * a);
         double t2 = (-b + sqrtDisc) / (2 * a);
 
-        List<GeoPoint> result = new LinkedList<>();
+        List<Intersectable.Intersection> result = new LinkedList<>();
 
         if (t1 > 0) {
-            result.add(new GeoPoint(this, ray.getPoint(t1)));
+            result.add(new Intersectable.Intersection(this, ray.getPoint(t1)));
         }
         if (t2 > 0) {
-            result.add(new GeoPoint(this, ray.getPoint(t2)));
+            result.add(new Intersectable.Intersection(this, ray.getPoint(t2)));
         }
 
         return result.isEmpty() ? null : result;
     }
+
+
 }

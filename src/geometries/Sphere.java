@@ -3,10 +3,15 @@ package geometries;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
-import java.util.List;
-import static primitives.Util.alignZero;
-import geometries.Intersectable.GeoPoint;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import static primitives.Util.alignZero;
+
+/**
+ * Sphere class represents a sphere in 3D space.
+ */
 public class Sphere extends RadialGeometry {
     private final Point center;
 
@@ -40,18 +45,21 @@ public class Sphere extends RadialGeometry {
     }
 
     /**
-     * Helper method to calculate intersections returning GeoPoints.
+     * NVI helper: calculate all intersections of the ray with the sphere,
+     * returning the new Intersection(type,point) objects.
      */
-    public List<GeoPoint> calculateIntersectionsHelper(Ray ray) {
+    @Override
+    protected List<Intersectable.Intersection> calculateIntersectionsHelper(Ray ray) {
         Point p0 = ray.getP0();
         Vector v = ray.getDir();
 
+        // vector from ray origin to sphere center
         Vector u;
         try {
             u = center.subtract(p0);
         } catch (IllegalArgumentException e) {
-            // Ray starts at the center → single intersection at radius distance
-            return List.of(new GeoPoint(this, ray.getPoint(radius)));
+            // Ray starts at the center → one intersection at t = radius
+            return List.of(new Intersectable.Intersection(this, ray.getPoint(radius)));
         }
 
         double tm = alignZero(v.dotProduct(u));
@@ -65,26 +73,14 @@ public class Sphere extends RadialGeometry {
         double t1 = alignZero(tm - th);
         double t2 = alignZero(tm + th);
 
-        if (t1 > 0 && t2 > 0) {
-            return List.of(
-                    new GeoPoint(this, ray.getPoint(t1)),
-                    new GeoPoint(this, ray.getPoint(t2))
-            );
-        }
+        var intersections = new LinkedList<Intersectable.Intersection>();
         if (t1 > 0) {
-            return List.of(new GeoPoint(this, ray.getPoint(t1)));
+            intersections.add(new Intersectable.Intersection(this, ray.getPoint(t1)));
         }
         if (t2 > 0) {
-            return List.of(new GeoPoint(this, ray.getPoint(t2)));
+            intersections.add(new Intersectable.Intersection(this, ray.getPoint(t2)));
         }
-        return null;
-    }
 
-    /**
-     * New findIntersections method, calls calculateIntersectionsHelper and returns GeoPoints.
-     */
-    @Override
-    public List<GeoPoint> findIntersections(Ray ray) {
-        return calculateIntersectionsHelper(ray);
+        return intersections.isEmpty() ? null : intersections;
     }
 }
