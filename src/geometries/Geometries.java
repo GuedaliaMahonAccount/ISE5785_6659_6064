@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Composite class that aggregates multiple geometric bodies for intersection testing.
  */
-public class Geometries implements Intersectable {
+public class Geometries extends Intersectable {
 
     private final List<Intersectable> geometries = new LinkedList<>();
 

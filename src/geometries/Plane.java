@@ -13,7 +13,7 @@ import geometries.Intersectable.GeoPoint;
  * The {@code Plane} class represents a plane in 3D space.
  * It is defined either by three points or by a point and a normal vector.
  */
-public class Plane implements Geometry {
+public class Plane extends Geometry {
     private final Point q0;
     private final Vector normal;
 

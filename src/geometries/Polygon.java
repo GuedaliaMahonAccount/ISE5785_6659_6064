@@ -9,7 +9,7 @@ import primitives.Vector;
 /**
  * Polygon class represents two-dimensional polygon in 3D Cartesian coordinate system
  */
-public class Polygon implements Geometry {
+public class Polygon extends Geometry {
    protected final List<Point> vertices;
    protected final Plane plane;
    private final int size;
