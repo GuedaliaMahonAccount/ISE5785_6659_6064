@@ -2,6 +2,7 @@ package renderer;
 
 import geometries.Geometry;
 import primitives.Color;
+import primitives.Material;
 import primitives.Ray;
 import primitives.Point;
 import scene.Scene;
@@ -10,8 +11,8 @@ import geometries.Intersectable.Intersection;
 import java.util.List;
 
 /**
- * A simple ray tracer that returns ambient light or background color.
- * Implements basic traceRay with intersection detection and ambient shading.
+ * SimpleRayTracer is a basic ray tracer for calculating color at intersection points.
+ * It supports ambient and emission shading for basic lighting effects.
  */
 public class SimpleRayTracer extends RayTracerBase {
 
@@ -24,25 +25,18 @@ public class SimpleRayTracer extends RayTracerBase {
     }
 
     /**
-     * Traces a ray through the scene, returns background if no hit,
-     * otherwise finds closest intersection and computes its color.
+     * Traces a ray through the scene to compute its color.
+     * If the ray hits no objects, the background color is returned.
      * @param ray the ray to trace
      * @return the computed color
      */
     @Override
     public Color traceRay(Ray ray) {
-        // Now call calculateIntersections (returns List<Intersection>)
         List<Intersection> intersections = scene.getGeometries().calculateIntersections(ray);
-
-        // No hit: return background color
         if (intersections == null || intersections.isEmpty()) {
             return scene.getBackground();
         }
-
-        // Find the closest intersection to the ray origin
         Intersection closestIntersection = findClosestIntersection(ray.getP0(), intersections);
-
-        // Compute shading color using the updated calcColor method
         return calcColor(closestIntersection);
     }
 
@@ -66,24 +60,15 @@ public class SimpleRayTracer extends RayTracerBase {
     }
 
     /**
-     * Calculates the color at the intersection point.
-     * This method combines the ambient light and the emission color,
-     * and multiplies the ambient light by the material's kA factor.
-     *
+     * Calculates the color at an intersection point.
      * @param intersection the intersection information
      * @return the color at the intersection point
      */
     private Color calcColor(Intersection intersection) {
         Geometry geometry = (Geometry) intersection.geometry;
-
-        // Get ambient light and scale it by material's kA
-        Color ambient = scene.getAmbientLight().getIntensity()
-                .scale(geometry.getMaterial().kA);
-
-        // Get emission color
+        Material material = geometry.getMaterial();
+        Color ambient = scene.getAmbientLight().getIntensity().scale(material.getKA());
         Color emission = geometry.getEmission();
-
-        // Combine ambient and emission
         return ambient.add(emission);
     }
 }
