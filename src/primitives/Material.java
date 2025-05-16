@@ -1,30 +1,40 @@
-
 package primitives;
 
 /**
- * Material class represents the material of the object
+ * Material class represents the material of the object, including its
+ * diffuse, specular, transparency, reflection properties, and shininess.
  */
 public class Material {
 
-    public double kA;
+    public Double3 kA = Double3.ONE; // Default to fully attenuated
     public Double3 kD = Double3.ZERO;
     public Double3 kS = Double3.ZERO;
-
-
-    /**
-     * kT is the transparency factor
-     */
-    public Double3 kT = Double3.ZERO;
-
-    /**
-     * kR is the reflection factor
-     */
-    public Double3 kR = Double3.ZERO;
+    public Double3 kT = Double3.ZERO; // Transparency factor
+    public Double3 kR = Double3.ZERO; // Reflection factor
     public int shininess = 0;
 
+    /**
+     * Sets the ambient attenuation factor (kA).
+     * @param kA The ambient attenuation factor as a double parameter
+     * @return the Material object
+     */
+    public Material setKA(double kA) {
+        this.kA = new Double3(kA);
+        return this;
+    }
 
     /**
-     * set the kD parameter
+     * Sets the ambient attenuation factor (kA).
+     * @param kA The ambient attenuation factor as a Double3 parameter
+     * @return the Material object
+     */
+    public Material setKA(Double3 kA) {
+        this.kA = kA;
+        return this;
+    }
+
+    /**
+     * Sets the diffuse attenuation factor (kD).
      * @param kD The diffuse attenuation factor as a double parameter
      * @return the Material object
      */
@@ -34,8 +44,8 @@ public class Material {
     }
 
     /**
-     * set the kD parameter
-     * @param kD The diffuse attenuation factor as a double3 parameter
+     * Sets the diffuse attenuation factor (kD).
+     * @param kD The diffuse attenuation factor as a Double3 parameter
      * @return the Material object
      */
     public Material setKD(Double3 kD) {
@@ -44,7 +54,7 @@ public class Material {
     }
 
     /**
-     * set the kS parameter
+     * Sets the specular attenuation factor (kS).
      * @param kS The specular attenuation factor as a double parameter
      * @return the Material object
      */
@@ -53,10 +63,9 @@ public class Material {
         return this;
     }
 
-
     /**
-     * set the kS parameter
-     * @param kS The specular attenuation factor as a double3 parameter
+     * Sets the specular attenuation factor (kS).
+     * @param kS The specular attenuation factor as a Double3 parameter
      * @return the Material object
      */
     public Material setKS(Double3 kS) {
@@ -65,7 +74,7 @@ public class Material {
     }
 
     /**
-     * set the kT parameter
+     * Sets the transparency factor (kT).
      * @param kT The transparency factor as a double parameter
      * @return the Material object
      */
@@ -75,8 +84,8 @@ public class Material {
     }
 
     /**
-     * set the kT parameter
-     * @param kT The transparency factor as a double3 parameter
+     * Sets the transparency factor (kT).
+     * @param kT The transparency factor as a Double3 parameter
      * @return the Material object
      */
     public Material setKT(Double3 kT) {
@@ -85,7 +94,7 @@ public class Material {
     }
 
     /**
-     * set the kR parameter
+     * Sets the reflection attenuation factor (kR).
      * @param kR The reflection attenuation factor as a double parameter
      * @return the Material object
      */
@@ -95,8 +104,8 @@ public class Material {
     }
 
     /**
-     * set the kR parameter
-     * @param kR The reflection attenuation factor as a double3 parameter
+     * Sets the reflection attenuation factor (kR).
+     * @param kR The reflection attenuation factor as a Double3 parameter
      * @return the Material object
      */
     public Material setKR(Double3 kR) {
@@ -105,12 +114,28 @@ public class Material {
     }
 
     /**
-     * set the shininess parameter
+     * Sets the shininess parameter.
      * @param shininess The shininess of the material
      * @return the Material object
      */
     public Material setShininess(int shininess) {
         this.shininess = shininess;
         return this;
+    }
+
+    /**
+     * Returns a string representation of the material.
+     * @return the string representation
+     */
+    @Override
+    public String toString() {
+        return "Material{" +
+                "kA=" + kA +
+                ", kD=" + kD +
+                ", kS=" + kS +
+                ", kT=" + kT +
+                ", kR=" + kR +
+                ", shininess=" + shininess +
+                '}';
     }
 }

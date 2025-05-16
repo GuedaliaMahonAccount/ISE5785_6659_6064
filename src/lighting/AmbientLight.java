@@ -6,8 +6,8 @@ import java.util.Objects;
 /**
  * Class representing ambient light in a 3D scene.
  */
-public class AmbientLight {
-    // The intensity of the ambient light
+public class AmbientLight extends Light {
+    // The intensity of the ambient light (𝑰𝑨)
     private final Color intensity;
 
     // A constant representing no ambient light (black)
@@ -18,6 +18,7 @@ public class AmbientLight {
      * @param intensity The color intensity of the ambient light.
      */
     public AmbientLight(Color intensity) {
+        super(intensity); // Pass the intensity to the parent Light class
         this.intensity = intensity;
     }
 
@@ -25,6 +26,7 @@ public class AmbientLight {
      * Returns the intensity of the ambient light.
      * @return The color intensity.
      */
+    @Override
     public Color getIntensity() {
         return intensity;
     }
