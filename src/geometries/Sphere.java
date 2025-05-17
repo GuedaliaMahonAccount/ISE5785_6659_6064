@@ -75,11 +75,29 @@ public class Sphere extends RadialGeometry {
 
         var intersections = new LinkedList<Intersectable.Intersection>();
         if (t1 > 0) {
-            intersections.add(new Intersectable.Intersection(this, ray.getPoint(t1)));
+            Point p1  = ray.getPoint(t1);
+            Vector n1 = p1.subtract(center).normalize();  // sphere normal
+            intersections.add(
+                    new Intersectable.Intersection(
+                            this,            // the geometry
+                            p1,              // intersection point
+                            getMaterial(),   // the material at that point
+                            ray,             // the incoming ray
+                            n1,              // the normal
+                            null             // light-source (filled later)
+                    )
+            );
         }
         if (t2 > 0) {
-            intersections.add(new Intersectable.Intersection(this, ray.getPoint(t2)));
+            Point p2  = ray.getPoint(t2);
+            Vector n2 = p2.subtract(center).normalize();
+            intersections.add(
+                    new Intersectable.Intersection(
+                            this, p2, getMaterial(), ray, n2, null
+                    )
+            );
         }
+
 
         return intersections.isEmpty() ? null : intersections;
     }
