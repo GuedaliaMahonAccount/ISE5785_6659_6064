@@ -50,12 +50,25 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return true if the dot product between normal and ray direction is not zero, false otherwise
      */
     private boolean preprocessIntersection(Intersection intersection, Vector rayDirection) {
-        // Cache ray direction
-        // Assume the intersection has normal and geometry already set
-        Vector normal = intersection.geometry.getNormal(intersection.point);
+        // Make sure the intersection has a normal
+        if (intersection.normal == null) {
+            // If the normal isn't already set, get it from the geometry
+            Vector normal = intersection.geometry.getNormal(intersection.point);
+
+            // Create a new Intersection with the normal set
+            // This is a workaround since the normal field is final
+            intersection = new Intersection(
+                    intersection.geometry,
+                    intersection.point,
+                    intersection.material,
+                    intersection.ray,
+                    normal,
+                    intersection.lightSource
+            );
+        }
 
         // Save dot product of ray direction and normal
-        double dotProduct = normal.dotProduct(rayDirection);
+        double dotProduct = intersection.normal.dotProduct(rayDirection);
 
         // If dot product is zero, there's no light contribution
         if (dotProduct == 0) {
@@ -69,22 +82,42 @@ public class SimpleRayTracer extends RayTracerBase {
      * Sets up light source information for an intersection.
      * @param intersection the intersection to update
      * @param lightSource the light source to set
-     * @return true if the light contributes to the intersection, false otherwise
+     * @return a new intersection with the light source set, or null if light doesn't contribute
      */
-    private boolean setLightSource(Intersection intersection, LightSource lightSource) {
-        // Get direction from light source to intersection point
-        Vector l = lightSource.getL(intersection.point);
-
-        // Calculate dot product between light direction and normal
-        Vector normal = intersection.normal;
-        double ln = l.dotProduct(normal);
-
-        // If both dot products are zero, light doesn't contribute
-        if (ln == 0) {
-            return false;
+    private Intersection setLightSource(Intersection intersection, LightSource lightSource) {
+        if (lightSource == null || intersection == null || intersection.normal == null) {
+            return null;
         }
 
-        return true;
+        try {
+            // Get direction from light source to intersection point
+            Vector l = lightSource.getL(intersection.point);
+            if (l == null) {
+                return null;
+            }
+
+            // Calculate dot product between light direction and normal
+            Vector normal = intersection.normal;
+            double ln = l.dotProduct(normal);
+
+            // If both dot products are zero, light doesn't contribute
+            if (ln == 0) {
+                return null;
+            }
+
+            // Create a new intersection with the light source set
+            return new Intersection(
+                    intersection.geometry,
+                    intersection.point,
+                    intersection.material,
+                    intersection.ray,
+                    intersection.normal,
+                    lightSource
+            );
+        } catch (Exception e) {
+            // If there's any error, return null
+            return null;
+        }
     }
 
     /**
@@ -93,18 +126,31 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return the diffuse component as a Double3
      */
     private Double3 calcDiffusive(Intersection intersection) {
-        // Get the material of the geometry
-        Material material = intersection.material;
+        // Safety check for null values
+        if (intersection == null || intersection.lightSource == null ||
+                intersection.normal == null || intersection.material == null) {
+            return Double3.ZERO;
+        }
 
-        // Get direction from light source to intersection point
-        Vector l = intersection.lightSource.getL(intersection.point);
+        try {
+            // Get the material of the geometry
+            Material material = intersection.material;
 
-        // Calculate dot product between light direction and normal
-        Vector normal = intersection.normal;
-        double ln = Math.abs(l.dotProduct(normal));
+            // Get direction from light source to intersection point
+            Vector l = intersection.lightSource.getL(intersection.point);
+            if (l == null) {
+                return Double3.ZERO;
+            }
 
-        // Calculate diffuse component (kD * |l·n|)
-        return material.getKD().scale(ln);
+            // Calculate dot product between light direction and normal
+            Vector normal = intersection.normal;
+            double ln = Math.abs(l.dotProduct(normal));
+
+            // Calculate diffuse component (kD * |l·n|)
+            return material.getKD().scale(ln);
+        } catch (Exception e) {
+            return Double3.ZERO;
+        }
     }
 
     /**
@@ -113,29 +159,43 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return the specular component as a Double3
      */
     private Double3 calcSpecular(Intersection intersection) {
-        // Get the material of the geometry
-        Material material = intersection.material;
-
-        // Get direction from light source to intersection point
-        Vector l = intersection.lightSource.getL(intersection.point);
-
-        // Calculate reflection vector r = l - 2(l·n)n
-        Vector normal = intersection.normal;
-        double ln = l.dotProduct(normal);
-        Vector r = l.subtract(normal.scale(2 * ln));
-
-        // Calculate dot product between reflection vector and view vector (-v)
-        Vector v = intersection.ray.getDir();
-        double minusVR = -v.dotProduct(r);
-
-        // If the angle is obtuse, no specular reflection
-        if (minusVR <= 0) {
+        // Safety check for null values
+        if (intersection == null || intersection.lightSource == null ||
+                intersection.normal == null || intersection.ray == null ||
+                intersection.material == null) {
             return Double3.ZERO;
         }
 
-        // Calculate specular component (kS * (max(0, -v·r))^nsh)
-        double pow = Math.pow(minusVR, material.getShininess());
-        return material.getKS().scale(pow);
+        try {
+            // Get the material of the geometry
+            Material material = intersection.material;
+
+            // Get direction from light source to intersection point
+            Vector l = intersection.lightSource.getL(intersection.point);
+            if (l == null) {
+                return Double3.ZERO;
+            }
+
+            // Calculate reflection vector r = l - 2(l·n)n
+            Vector normal = intersection.normal;
+            double ln = l.dotProduct(normal);
+            Vector r = l.subtract(normal.scale(2 * ln));
+
+            // Calculate dot product between reflection vector and view vector (-v)
+            Vector v = intersection.ray.getDir();
+            double minusVR = -v.dotProduct(r);
+
+            // If the angle is obtuse, no specular reflection
+            if (minusVR <= 0) {
+                return Double3.ZERO;
+            }
+
+            // Calculate specular component (kS * (max(0, -v·r))^nsh)
+            double pow = Math.pow(minusVR, material.getShininess());
+            return material.getKS().scale(pow);
+        } catch (Exception e) {
+            return Double3.ZERO;
+        }
     }
 
     /**
@@ -153,7 +213,8 @@ public class SimpleRayTracer extends RayTracerBase {
         // For each light source in the scene
         for (LightSource lightSource : scene.getLights()) {
             // Set up light source information
-            if (!setLightSource(intersection, lightSource)) {
+            Intersection lightIntersection = setLightSource(intersection, lightSource);
+            if (lightIntersection == null) {
                 continue; // Skip this light source if it doesn't contribute
             }
 
@@ -161,8 +222,8 @@ public class SimpleRayTracer extends RayTracerBase {
             Color lightIntensity = lightSource.getIntensity(intersection.point);
 
             // Calculate diffuse and specular components
-            Double3 diffuse = calcDiffusive(intersection);
-            Double3 specular = calcSpecular(intersection);
+            Double3 diffuse = calcDiffusive(lightIntersection);
+            Double3 specular = calcSpecular(lightIntersection);
 
             // Combine diffuse and specular components
             Double3 combined = diffuse.add(specular);
@@ -181,14 +242,42 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return the color at the intersection point
      */
     private Color calcColor(Intersection intersection, Ray ray) {
-        // Preprocess intersection information
-        if (!preprocessIntersection(intersection, ray.getDir())) {
-            return Color.BLACK;
+        // Make sure we have a complete intersection
+        if (intersection == null) {
+            return scene.getBackground();
+        }
+
+        // Ensure the intersection has the ray set
+        if (intersection.ray == null) {
+            intersection = new Intersection(
+                    intersection.geometry,
+                    intersection.point,
+                    intersection.material,
+                    ray,
+                    intersection.normal,
+                    intersection.lightSource
+            );
+        }
+
+        // Ensure the intersection has the normal set
+        if (intersection.normal == null) {
+            Vector normal = intersection.geometry.getNormal(intersection.point);
+            intersection = new Intersection(
+                    intersection.geometry,
+                    intersection.point,
+                    intersection.material,
+                    intersection.ray,
+                    normal,
+                    intersection.lightSource
+            );
         }
 
         // Get ambient light contribution
         Geometry geometry = intersection.geometry;
         Material material = geometry.getMaterial();
+        if (material == null) {
+            material = new Material();
+        }
         Color ambient = scene.getAmbientLight().getIntensity().scale(material.getKA());
 
         // Add local lighting effects
