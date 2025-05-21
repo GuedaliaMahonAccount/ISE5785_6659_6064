@@ -9,7 +9,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import geometries.Intersectable.GeoPoint;
-import geometries.Triangle;
 
 /**
  * Test class for Triangle class
