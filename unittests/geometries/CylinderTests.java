@@ -7,7 +7,6 @@ import primitives.Vector;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import geometries.Intersectable.GeoPoint;
-import geometries.Cylinder;
 
 class CylinderTests {
 
