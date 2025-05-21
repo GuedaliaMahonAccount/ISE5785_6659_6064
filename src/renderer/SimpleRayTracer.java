@@ -99,11 +99,13 @@ public class SimpleRayTracer extends RayTracerBase {
             // Calculate dot product between light direction and normal
             Vector normal = intersection.normal;
             double ln = l.dotProduct(normal);
+            double vn = intersection.ray.getDir().dotProduct(normal);
 
-            // If both dot products are zero, light doesn't contribute
-            if (ln == 0) {
+            // Fix: only allow light if both vectors are on same side of surface
+            if (ln * vn <= 0) {
                 return null;
             }
+
 
             // Create a new intersection with the light source set
             return new Intersection(
