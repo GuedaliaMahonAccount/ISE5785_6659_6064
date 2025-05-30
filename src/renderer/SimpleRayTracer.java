@@ -85,6 +85,7 @@ public class SimpleRayTracer extends RayTracerBase {
         return result;
     }
 
+
     /**
      * Computes the accumulated transparency between the intersection
      * point and the light source by marching a shadow‐ray and multiplying
