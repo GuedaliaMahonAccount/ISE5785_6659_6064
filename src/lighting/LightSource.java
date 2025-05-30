@@ -1,33 +1,34 @@
+// lighting/LightSource.java
 package lighting;
 
 import primitives.*;
 
 /**
- * Interface for all light sources in the scene.
- * Provides methods to calculate light direction, intensity, and distance.
+ * Interface for light sources in the scene.
+ * Provides methods to compute direction, intensity and distance
+ * from the light to any point in space.
  */
 public interface LightSource {
     /**
-     * Calculates the light intensity at a given point in the scene.
-     *
-     * @param p The point in the scene.
-     * @return The color intensity of the light at the given point.
+     * Returns the color intensity of this light at point {@code p}.
+     * @param p the target point
+     * @return {@link Color} intensity
      */
     Color getIntensity(Point p);
 
     /**
-     * Returns the direction vector from the light source to a given point.
-     *
-     * @param p The point in the scene.
-     * @return The direction vector to the given point.
+     * Returns the unit vector pointing from the light towards point {@code p}.
+     * @param p the target point
+     * @return normalized {@link Vector} from light to point
      */
     Vector getL(Point p);
 
     /**
-     * Returns the distance from the light source to a given point.
-     *
-     * @param p The point in the scene.
-     * @return The distance to the given point.
+     * Returns the distance from this light to point {@code p}.
+     * Useful for attenuation and shadow checks.
+     * @param p the target point
+     * @return distance as {@code double}, or {@code Double.POSITIVE_INFINITY}
+     *         for directional lights
      */
     double getDistance(Point p);
 }

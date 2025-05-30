@@ -32,12 +32,18 @@ public class Sphere extends RadialGeometry {
 
     @Override
     public Vector getNormal(Point point) {
-        double distance = point.distance(center);
-        if (Math.abs(distance - radius) > 1e-10) {
-            throw new IllegalArgumentException("Point is not on the surface of the sphere");
+        double dist = point.distance(center);
+        double diff = Math.abs(dist - radius);
+        // allow very small floating-point error up to 1e-6
+        final double EPS = 1e-6;
+        if (diff > EPS) {
+            throw new IllegalArgumentException(
+                    String.format("Point %s is not on the sphere surface (|dist−r|=%.3e > %.3e)",
+                            point, diff, EPS));
         }
         return point.subtract(center).normalize();
     }
+
 
     @Override
     public String toString() {

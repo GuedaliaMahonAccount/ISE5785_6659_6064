@@ -1,43 +1,68 @@
+// primitives/Ray.java
 package primitives;
 
 import geometries.Intersectable.GeoPoint;
-import geometries.Intersectable.Intersection;  // Added import
+import geometries.Intersectable.Intersection;
+import renderer.SimpleRayTracer;
+
 import java.util.List;
 
 /**
- * The {@code Ray} class represents a ray in 3D space.
- * A ray is defined by a starting point and a direction vector.
+ * The {@code Ray} class represents a ray in 3D space, defined by
+ * a starting point {@link #p0} and a normalized direction {@link #dir}.
+ * Provides utilities for computing points along the ray and
+ * finding closest intersections or geo‐points.
  */
 public class Ray {
-    /** The starting point of the ray. */
+    /** The ray’s origin point. */
     private final Point p0;
-    /** The normalized direction vector of the ray. */
+    /** The ray’s normalized direction vector. */
     private final Vector dir;
 
     /**
-     * Constructs a ray from a starting point and a direction.
-     * @param p0 origin point
-     * @param dir direction vector
+     * Constructs a ray from an origin and direction.
+     * @param p0  origin point
+     * @param dir direction vector (will be normalized)
      */
     public Ray(Point p0, Vector dir) {
         this.p0 = p0;
         this.dir = dir.normalize();
     }
 
+    /**
+     * Constructs a ray whose origin is shifted by ±DELTA along the normal
+     * to avoid self‐intersection artifacts.
+     * @param head   the hit‐point
+     * @param dir    the (already normalized) direction
+     * @param normal the surface normal at the hit point
+     */
+    public Ray(Point head, Vector dir, Vector normal) {
+        double sign = dir.dotProduct(normal) < 0 ? -1 : 1;
+        this.p0  = head.add(normal.scale(sign * SimpleRayTracer.DELTA));
+        this.dir = dir.normalize();
+    }
+
+    /**
+     * Returns the origin point of the ray.
+     * @return origin {@link Point}
+     */
     public Point getP0() {
         return p0;
     }
 
+    /**
+     * Returns the direction vector of the ray.
+     * @return normalized {@link Vector}
+     */
     public Vector getDir() {
         return dir;
     }
 
     @Override
     public boolean equals(Object obj) {
-        return this == obj ||
-                (obj instanceof Ray other &&
-                        p0.equals(other.p0) &&
-                        dir.equals(other.dir));
+        if (this == obj) return true;
+        if (!(obj instanceof Ray other)) return false;
+        return p0.equals(other.p0) && dir.equals(other.dir);
     }
 
     @Override
@@ -46,20 +71,21 @@ public class Ray {
     }
 
     /**
-     * Returns a point on the ray at a distance d from the starting point.
-     * @param d the distance from the starting point
-     * @return the point on the ray
+     * Computes the point along this ray at distance {@code d} from {@link #p0}.
+     * @param d distance from the origin
+     * @return the computed {@link Point} on the ray
      */
     public Point getPoint(double d) {
-        if (Util.isZero(d))
+        if (Util.isZero(d)) {
             return p0;
+        }
         return p0.add(dir.scale(d));
     }
 
     /**
-     * Finds the closest GeoPoint to the origin of this ray.
-     * @param geoPoints List of GeoPoints to check.
-     * @return The closest GeoPoint, or null if the list is null or empty.
+     * Finds the closest {@link GeoPoint} in the given list to this ray’s origin.
+     * @param geoPoints list of {@link GeoPoint}s
+     * @return the nearest {@link GeoPoint}, or {@code null} if none
      */
     public GeoPoint findClosestGeoPoint(List<GeoPoint> geoPoints) {
         if (geoPoints == null || geoPoints.isEmpty()) {
@@ -78,9 +104,9 @@ public class Ray {
     }
 
     /**
-     * Finds the closest Intersection to the origin of this ray.
-     * @param intersections List of Intersection objects.
-     * @return The closest Intersection, or null if the list is null or empty.
+     * Finds the closest {@link Intersection} in the given list to this ray’s origin.
+     * @param intersections list of {@link Intersection}s
+     * @return the nearest {@link Intersection}, or {@code null} if none
      */
     public Intersection findClosestIntersection(List<Intersection> intersections) {
         if (intersections == null || intersections.isEmpty()) {
@@ -99,12 +125,19 @@ public class Ray {
     }
 
     /**
-     * Finds the closest Point to the origin of this ray by using findClosestIntersection.
-     * @param points List of Points.
-     * @return The closest Point, or null if the list is null.
+     * Finds the closest {@link Point} in the given list to this ray’s origin.
+     * @param points list of {@link Point}s
+     * @return the nearest {@link Point}, or {@code null} if none
      */
     public Point findClosestPoint(List<Point> points) {
-        return points == null ? null
-                : findClosestIntersection(points.stream().map(p -> new Intersection(null, p)).toList()).point;
+        if (points == null || points.isEmpty()) {
+            return null;
+        }
+        Intersection i = findClosestIntersection(
+                points.stream()
+                        .map(p -> new Intersection(null, p))
+                        .toList()
+        );
+        return i == null ? null : i.point;
     }
 }
