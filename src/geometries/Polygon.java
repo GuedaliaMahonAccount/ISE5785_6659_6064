@@ -44,31 +44,42 @@ public class Polygon extends Geometry {
 
    @Override
    protected List<Intersectable.Intersection> calculateIntersectionsHelper(Ray ray) {
-      // Intersect with the plane first
+      // 1. Intersect with the plane first
       List<GeoPoint> planeIntersections = plane.findGeoIntersections(ray);
-      if (planeIntersections == null) return null;
+      if (planeIntersections == null)
+         return null;
 
-      GeoPoint planeIntersection = planeIntersections.getFirst();
-      Point p = planeIntersection.point;
+      // 2. Get the single intersection point
+      Point p = planeIntersections.get(0).point;  // or getFirst() if you’re on LinkedList
 
-      Vector n = plane.getNormal();
+      // 3. Prepare the normal
+      Vector n = plane.getNormal(p);
 
-      // Check if the intersection is inside the polygon
-      for (int i = 0; i < size; i++) {
+      // 4. Inside–outside test, edge by edge
+      for (int i = 0; i < size; ++i) {
          Point vi = vertices.get(i);
          Point vj = vertices.get((i + 1) % size);
 
          Vector edge = vj.subtract(vi);
-         Vector vp = p.subtract(vi);
+         Vector vp   = p.subtract(vi);
 
-         Vector cross = edge.crossProduct(vp);
+         Vector cross;
+         try {
+            // this will throw if edge || vp ⇒ zero‐vector
+            cross = edge.crossProduct(vp);
+         } catch (IllegalArgumentException ignore) {
+            // ray hit exactly on an edge or vertex → treat as “inside”
+            continue;
+         }
+
          double sign = alignZero(cross.dotProduct(n));
-
-         // If the point is outside the polygon
-         if (sign < 0) return null;
+         if (sign < 0) {
+            // outside
+            return null;
+         }
       }
 
-      // Return the intersection as an Intersectable.Intersection
+      // 5. If all passed, we’re inside
       return List.of(new Intersectable.Intersection(this, p));
    }
 
