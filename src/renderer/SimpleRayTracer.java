@@ -34,7 +34,7 @@ public class SimpleRayTracer extends RayTracerBase {
             return scene.getBackground();
         }
         // ambient term
-        Material m     = ip.geometry.getMaterial();
+        Material m       = ip.geometry.getMaterial();
         Color    ambient = scene.getAmbientLight()
                 .getIntensity()
                 .scale(m.getKA());
@@ -77,7 +77,7 @@ public class SimpleRayTracer extends RayTracerBase {
                     // attenuate light by transparency
                     Color   iL   = light.getIntensity(ip.point).scale(ktr);
                     Double3 diff = calcDiffusive(m, nl);
-                    Double3 spec = calcSpecular (m, n, l, nl, v);
+                    Double3 spec = calcSpecular(m, n, l, nl, v);
                     result = result.add(iL.scale(diff.add(spec)));
                 }
             }
@@ -129,14 +129,14 @@ public class SimpleRayTracer extends RayTracerBase {
 
         // reflection
         if (!m.getKR().lowerThan(MIN_K)) {
-            Ray   reflRay = constructReflectedRay(ip, ray);
+            Ray reflRay = constructReflectedRay(ip, ray);
             result = result.add(
                     calcGlobalEffect(reflRay, level, kAcc, m.getKR())
             );
         }
-        // transparency
+        // transparency (refraction)
         if (!m.getKT().lowerThan(MIN_K)) {
-            Ray   refrRay = constructRefractedRay(ip, ray);
+            Ray refrRay = constructRefractedRay(ip, ray);
             result = result.add(
                     calcGlobalEffect(refrRay, level, kAcc, m.getKT())
             );
