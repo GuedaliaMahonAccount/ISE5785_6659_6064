@@ -13,11 +13,14 @@ import geometries.Intersectable.Intersection;
 
 import java.util.List;
 
+import static primitives.Util.alignZero;
+
 /**
  * SimpleRayTracer is a basic ray tracer for calculating color at intersection points.
  * It supports ambient and emission shading for basic lighting effects.
  */
 public class SimpleRayTracer extends RayTracerBase {
+    private static final double EPS = 0.1; // Shadow ray offset constant
 
     /**
      * Constructs a SimpleRayTracer for the given scene.
@@ -44,197 +47,82 @@ public class SimpleRayTracer extends RayTracerBase {
     }
 
     /**
-     * Preprocesses intersection information by initializing ray direction, normal, and dot product.
-     * @param intersection the intersection to preprocess
-     * @param rayDirection the direction of the ray that caused the intersection
-     * @return true if the dot product between normal and ray direction is not zero, false otherwise
+     * Checks if a point is unshaded (not in shadow) from a light source.
+     * @param intersection the intersection point to check
+     * @param lightSource the light source to check against
+     * @param l direction from light to point
+     * @param n normal at the point
+     * @param nl dot product of n and l
+     * @return true if the point is unshaded, false otherwise
      */
-    private boolean preprocessIntersection(Intersection intersection, Vector rayDirection) {
-        // Make sure the intersection has a normal
-        if (intersection.normal == null) {
-            // If the normal isn't already set, get it from the geometry
-            Vector normal = intersection.geometry.getNormal(intersection.point);
+    private boolean unshaded(Intersection intersection, LightSource lightSource, Vector l, Vector n, double nl) {
+        Vector lightDirection = l.scale(-1); // from point to light source
+        Vector epsVector = n.scale(nl < 0 ? EPS : -EPS);
+        Point point = intersection.point.add(epsVector);
+        Ray lightRay = new Ray(point, lightDirection);
 
-            // Create a new Intersection with the normal set
-            // This is a workaround since the normal field is final
-            intersection = new Intersection(
-                    intersection.geometry,
-                    intersection.point,
-                    intersection.material,
-                    intersection.ray,
-                    normal,
-                    intersection.lightSource
-            );
-        }
-
-        // Save dot product of ray direction and normal
-        double dotProduct = intersection.normal.dotProduct(rayDirection);
-
-        // If dot product is zero, there's no light contribution
-        if (dotProduct == 0) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Sets up light source information for an intersection.
-     * @param intersection the intersection to update
-     * @param lightSource the light source to set
-     * @return a new intersection with the light source set, or null if light doesn't contribute
-     */
-    private Intersection setLightSource(Intersection intersection, LightSource lightSource) {
-        if (lightSource == null || intersection == null || intersection.normal == null) {
-            return null;
-        }
-
-        try {
-            // Get direction from light source to intersection point
-            Vector l = lightSource.getL(intersection.point);
-            if (l == null) {
-                return null;
-            }
-
-            // Calculate dot product between light direction and normal
-            Vector normal = intersection.normal;
-            double ln = l.dotProduct(normal);
-            double vn = intersection.ray.getDir().dotProduct(normal);
-
-            // Fix: only allow light if both vectors are on same side of surface
-            if (ln * vn <= 0) {
-                return null;
-            }
-
-
-            // Create a new intersection with the light source set
-            return new Intersection(
-                    intersection.geometry,
-                    intersection.point,
-                    intersection.material,
-                    intersection.ray,
-                    intersection.normal,
-                    lightSource
-            );
-        } catch (Exception e) {
-            // If there's any error, return null
-            return null;
-        }
-    }
-
-    /**
-     * Calculates diffuse reflection component.
-     * @param intersection the intersection information
-     * @return the diffuse component as a Double3
-     */
-    private Double3 calcDiffusive(Intersection intersection) {
-        // Safety check for null values
-        if (intersection == null || intersection.lightSource == null ||
-                intersection.normal == null || intersection.material == null) {
-            return Double3.ZERO;
-        }
-
-        try {
-            // Get the material of the geometry
-            Material material = intersection.material;
-
-            // Get direction from light source to intersection point
-            Vector l = intersection.lightSource.getL(intersection.point);
-            if (l == null) {
-                return Double3.ZERO;
-            }
-
-            // Calculate dot product between light direction and normal
-            Vector normal = intersection.normal;
-            double ln = Math.abs(l.dotProduct(normal));
-
-            // Calculate diffuse component (kD * |l·n|)
-            return material.getKD().scale(ln);
-        } catch (Exception e) {
-            return Double3.ZERO;
-        }
-    }
-
-    /**
-     * Calculates specular reflection component.
-     * @param intersection the intersection information
-     * @return the specular component as a Double3
-     */
-    private Double3 calcSpecular(Intersection intersection) {
-        // Safety check for null values
-        if (intersection == null || intersection.lightSource == null ||
-                intersection.normal == null || intersection.ray == null ||
-                intersection.material == null) {
-            return Double3.ZERO;
-        }
-
-        try {
-            // Get the material of the geometry
-            Material material = intersection.material;
-
-            // Get direction from light source to intersection point
-            Vector l = intersection.lightSource.getL(intersection.point);
-            if (l == null) {
-                return Double3.ZERO;
-            }
-
-            // Calculate reflection vector r = l - 2(l·n)n
-            Vector normal = intersection.normal;
-            double ln = l.dotProduct(normal);
-            Vector r = l.subtract(normal.scale(2 * ln));
-
-            // Calculate dot product between reflection vector and view vector (-v)
-            Vector v = intersection.ray.getDir();
-            double minusVR = -v.dotProduct(r);
-
-            // If the angle is obtuse, no specular reflection
-            if (minusVR <= 0) {
-                return Double3.ZERO;
-            }
-
-            // Calculate specular component (kS * (max(0, -v·r))^nsh)
-            double pow = Math.pow(minusVR, material.getShininess());
-            return material.getKS().scale(pow);
-        } catch (Exception e) {
-            return Double3.ZERO;
-        }
+        List<Intersection> intersections = scene.getGeometries().calculateIntersections(lightRay);
+        return intersections == null || intersections.isEmpty();
     }
 
     /**
      * Calculates local lighting effects at an intersection.
      * @param intersection the intersection information
+     * @param ray the ray that caused the intersection
      * @return the color resulting from local lighting effects
      */
-    private Color calcColorLocalEffects(Intersection intersection) {
-        // Start with emission color
+    private Color calcLocalEffects(Intersection intersection, Ray ray) {
         Color color = intersection.geometry.getEmission();
-
-        // Get material properties
-        Material material = intersection.material;
-
-        // For each light source in the scene
-        for (LightSource lightSource : scene.getLights()) {
-            // Set up light source information
-            Intersection lightIntersection = setLightSource(intersection, lightSource);
-            if (lightIntersection == null) {
-                continue; // Skip this light source if it doesn't contribute
-            }
-
-            // Get light intensity at the intersection point
-            Color lightIntensity = lightSource.getIntensity(intersection.point);
-
-            // Calculate diffuse and specular components
-            Double3 diffuse = calcDiffusive(lightIntersection);
-            Double3 specular = calcSpecular(lightIntersection);
-
-            // Combine diffuse and specular components
-            Double3 combined = diffuse.add(specular);
-
-            // Add light contribution to the color
-            color = color.add(lightIntensity.scale(combined));
+        Vector v = ray.getDir();
+        Vector n = intersection.geometry.getNormal(intersection.point);
+        double nv = alignZero(n.dotProduct(v));
+        if (nv == 0) {
+            return color;
         }
 
+        Material material = intersection.geometry.getMaterial();
+
+        for (LightSource lightSource : scene.getLights()) {
+            Vector l = lightSource.getL(intersection.point);
+            double nl = alignZero(n.dotProduct(l));
+            if (nl * nv > 0) { // sign(nl) == sign(nv)
+                if (unshaded(intersection, lightSource, l, n, nl)) {
+                    Color iL = lightSource.getIntensity(intersection.point);
+                    color = color.add(
+                            iL.scale(calcDiffusive(material, nl).add(calcSpecular(material, n, l, nl, v)))
+                    );
+                }
+            }
+        }
         return color;
+    }
+
+    /**
+     * Calculates diffuse reflection component.
+     * @param material the material properties
+     * @param nl dot product of normal and light direction
+     * @return the diffuse component as a Double3
+     */
+    private Double3 calcDiffusive(Material material, double nl) {
+        return material.getKD().scale(Math.abs(nl));
+    }
+
+    /**
+     * Calculates specular reflection component.
+     * @param material the material properties
+     * @param n normal vector
+     * @param l light direction
+     * @param nl dot product of n and l
+     * @param v view direction
+     * @return the specular component as a Double3
+     */
+    private Double3 calcSpecular(Material material, Vector n, Vector l, double nl, Vector v) {
+        Vector r = l.subtract(n.scale(2 * nl));
+        double minusVR = alignZero(-v.dotProduct(r));
+        if (minusVR <= 0) {
+            return Double3.ZERO;
+        }
+        return material.getKS().scale(Math.pow(minusVR, material.getShininess()));
     }
 
     /**
@@ -244,21 +132,8 @@ public class SimpleRayTracer extends RayTracerBase {
      * @return the color at the intersection point
      */
     private Color calcColor(Intersection intersection, Ray ray) {
-        // Make sure we have a complete intersection
         if (intersection == null) {
             return scene.getBackground();
-        }
-
-        // Ensure the intersection has the ray set
-        if (intersection.ray == null) {
-            intersection = new Intersection(
-                    intersection.geometry,
-                    intersection.point,
-                    intersection.material,
-                    ray,
-                    intersection.normal,
-                    intersection.lightSource
-            );
         }
 
         // Ensure the intersection has the normal set
@@ -275,15 +150,14 @@ public class SimpleRayTracer extends RayTracerBase {
         }
 
         // Get ambient light contribution
-        Geometry geometry = intersection.geometry;
-        Material material = geometry.getMaterial();
+        Material material = intersection.geometry.getMaterial();
         if (material == null) {
             material = new Material();
         }
         Color ambient = scene.getAmbientLight().getIntensity().scale(material.getKA());
 
         // Add local lighting effects
-        Color localEffects = calcColorLocalEffects(intersection);
+        Color localEffects = calcLocalEffects(intersection, ray);
 
         // Combine ambient and local effects
         return ambient.add(localEffects);
