@@ -79,7 +79,12 @@ public class Ray {
         if (Util.isZero(d)) {
             return p0;
         }
-        return p0.add(dir.scale(d));
+        try {
+            return p0.add(dir.scale(d));
+        } catch (IllegalArgumentException e) {
+            // If scaling creates a zero vector, return the origin point
+            return p0;
+        }
     }
 
     /**
