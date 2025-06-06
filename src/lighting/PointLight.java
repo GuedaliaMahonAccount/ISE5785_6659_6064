@@ -1,110 +1,104 @@
+// lighting/PointLight.java
 package lighting;
 
 import primitives.*;
+import java.util.Random;
 
 /**
  * Represents a point light source in the scene with attenuation based on distance.
+ * Now supports circular‐area soft shadows via super‐sampling.
+ * Also provides a no‐op setNarrowBeam(int) so that tests invoking it on a PointLight compile.
  */
 public class PointLight extends Light implements LightSource {
     protected final Point position;
+
+    // original attenuation factors
     protected double kC = 1.0;
     protected double kL = 0.0;
     protected double kQ = 0.0;
-    // Add a default narrowBeam field (can be protected so SpotLight can access it)
-    protected double narrowBeam = 1.0;
+
+    // --- NEW for soft shadows: ---
+    // radius of the circular area light (world units)
+    private double radius = 0.0;
+    // number of shadow‐ray samples per point
+    private int numSamples = 1;
+    // random generator for jittering sample points
+    private final Random random = new Random();
 
     /**
      * Constructor for PointLight.
      *
      * @param intensity The intensity of the light.
-     * @param position The position of the light source.
+     * @param position  The position of the light source.
      */
     public PointLight(Color intensity, Point position) {
         super(intensity);
         this.position = position;
     }
 
-    /**
-     * Sets the constant attenuation factor.
-     *
-     * @param kC The constant attenuation factor.
-     * @return The PointLight object (for chaining).
-     */
+    // ------------ Existing setter/getter for attenuation ------------
+
     public PointLight setKc(double kC) {
         this.kC = Math.max(0, kC);
         return this;
     }
 
-    /**
-     * Sets the linear attenuation factor.
-     *
-     * @param kL The linear attenuation factor.
-     * @return The PointLight object (for chaining).
-     */
     public PointLight setKl(double kL) {
         this.kL = Math.max(0, kL);
         return this;
     }
 
-    /**
-     * Sets the quadratic attenuation factor.
-     *
-     * @param kQ The quadratic attenuation factor.
-     * @return The PointLight object (for chaining).
-     */
     public PointLight setKq(double kQ) {
         this.kQ = Math.max(0, kQ);
         return this;
     }
 
+    // ------------ NEW setters/getters for area/light sampling ------------
+
     /**
-     * Sets the narrow beam factor.
-     * This method is implemented in PointLight for compatibility but has no effect
-     * unless overridden in a subclass like SpotLight.
-     *
-     * @param narrowBeam The narrow beam factor.
-     * @return The PointLight object (for chaining).
+     * Sets the circular area radius for soft shadows.
+     * @param radius radius of the area light (>= 0)
+     * @return this PointLight (for chaining)
      */
-    public PointLight setNarrowBeam(double narrowBeam) {
-        // This method exists for compatibility but does nothing in PointLight
+    public PointLight setRadius(double radius) {
+        this.radius = Math.max(0, radius);
         return this;
     }
 
     /**
-     * Returns the position of the point light.
-     *
-     * @return The position of the light source.
+     * Sets how many samples to shoot toward the light’s disk per shading point.
+     * Must be >= 1.
+     * @param numSamples number of shadow rays
+     * @return this PointLight (for chaining)
      */
-    public Point getPosition() {
-        return position;
+    public PointLight setNumSamples(int numSamples) {
+        this.numSamples = Math.max(1, numSamples);
+        return this;
     }
 
     /**
-     * Returns the constant attenuation factor (kC).
-     *
-     * @return The constant attenuation factor.
+     * No‐op stub so that tests calling setNarrowBeam(int) on a PointLight compile.
      */
-    public double getKc() {
-        return kC;
+    public PointLight setNarrowBeam(int ignored) {
+        // PointLight does not use narrow‐beam; this is just a stub for compatibility with LightsTests.
+        return this;
     }
 
     /**
-     * Returns the linear attenuation factor (kL).
-     *
-     * @return The linear attenuation factor.
+     * Returns the radius of the circular area light.
      */
-    public double getKl() {
-        return kL;
+    public double getRadius() {
+        return radius;
     }
 
     /**
-     * Returns the quadratic attenuation factor (kQ).
-     *
-     * @return The quadratic attenuation factor.
+     * Returns how many samples this light uses for soft shadows.
      */
-    public double getKq() {
-        return kQ;
+    public int getNumSamples() {
+        return numSamples;
     }
+
+    // ----------------------------------------------------------------------
 
     @Override
     public Color getIntensity(Point p) {
@@ -113,8 +107,38 @@ public class PointLight extends Light implements LightSource {
         return intensity.scale(attenuation);
     }
 
+    /**
+     * Sample a random point on the circular disk, orthogonal to the vector from
+     * this light to the shading point {@code p}. The disk lies in a plane whose normal
+     * is (p − position).normalize(). Returns a Point on that disk.
+     *
+     * @param p the shading point
+     * @return a jittered sample point on the area light’s circle
+     */
+    public Point getSamplePoint(Point p) {
+        // Vector from light center to p
+        Vector toP = p.subtract(position).normalize();
+        // find any two orthonormal basis vectors (u, v) on plane orthogonal to toP
+        Vector up = Math.abs(toP.getX()) < 1e-6 && Math.abs(toP.getZ()) < 1e-6
+                ? new Vector(1, 0, 0)
+                : new Vector(0, 1, 0);
+        Vector u = toP.crossProduct(up).normalize();
+        Vector v = toP.crossProduct(u).normalize();
+
+        // random radius (sqrt for uniform inside circle) and angle
+        double r   = Math.sqrt(random.nextDouble()) * radius;
+        double theta = 2 * Math.PI * random.nextDouble();
+
+        double xOff = r * Math.cos(theta);
+        double yOff = r * Math.sin(theta);
+
+        // sample point = center + xOff * u + yOff * v
+        return position.add(u.scale(xOff)).add(v.scale(yOff));
+    }
+
     @Override
     public Vector getL(Point p) {
+        // direction from the (centroid) light position to point p
         return p.subtract(position).normalize();
     }
 

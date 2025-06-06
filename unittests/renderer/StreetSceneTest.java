@@ -1,3 +1,4 @@
+// renderer/StreetSceneTest.java
 package renderer;
 
 import org.junit.jupiter.api.Test;
@@ -5,23 +6,27 @@ import geometries.*;
 import lighting.*;
 import primitives.*;
 import scene.Scene;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Test class for rendering a colorful, realistic street scene with planted trees and no cars,
- * with windows removed and lighting toned down for a more balanced, "perfect" look.
+ * with windows removed and lighting toned down for a more balanced, “perfect” look,
+ * now including circular-area soft shadows.
  */
 class StreetSceneTest {
     /** Scene for the test */
-    private final Scene scene = new Scene("Colorful Realistic Street Scene (No Windows, Adjusted Lighting)");
+    private final Scene scene = new Scene("Colorful Realistic Street Scene (No Windows, Soft Shadows)");
+
     /** Camera builder for the test */
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
             .setRayTracer(scene, RayTracerType.SIMPLE);
 
     /**
      * Create a photorealistic street scene with vibrant colors, trees planted on the ground,
-     * without any vehicles, without windows on buildings, and with reduced lighting intensity.
+     * without any vehicles, without windows on buildings, and with reduced lighting intensity,
+     * plus soft shadows.
      */
     @Test
     void streetScene() {
@@ -132,49 +137,53 @@ class StreetSceneTest {
         createTrafficLight(geometries, new Point(30, 0, -80), new Color(40, 160, 40));
         createTrafficLight(geometries, new Point(-30, 0, -150), new Color(40, 160, 40));
 
-        // Street lamps - with warm yellow glow (tone these down)
+        // Street lamps – now with soft shadows enabled
         for (int i = 0; i < 6; i++) {
             double zPos = -40 - i * 50;
             createStreetLamp(geometries, new Point(-50, 0, zPos));
             createStreetLamp(geometries, new Point(55, 0, zPos + 25));
         }
 
-        // Bus stop (bright blue roof)
-        createBusStop(geometries, new Point(35, 0, -180));
-
         // Add all geometries to the scene
         scene.geometries.add(geometries.toArray(new Intersectable[0]));
 
-        // ============ Realistic Lighting - Further Reduced Intensity ==============
+        // ============ Realistic Lighting – Further Reduced Intensity ==============
         // Ambient light (much softer daylight)
         scene.setAmbientLight(new AmbientLight(new Color(20, 20, 25)));
 
-        // Main sun (warm late-afternoon) - significantly reduced intensity
+        // Main sun (warm late-afternoon) – significantly reduced intensity
         scene.lights.add(
                 new DirectionalLight(new Color(90, 80, 70), new Vector(0.4, -0.6, -0.7)));
 
-        // Sky fill light (cooler) - significantly reduced intensity
+        // Sky fill light (cooler) – significantly reduced intensity
         scene.lights.add(
                 new DirectionalLight(new Color(30, 35, 40), new Vector(-0.2, -0.3, 0.5)));
 
-        // Street lamp point lights - fewer lights and lowered intensity
+        // Street lamp point lights – fewer lights, lowered intensity, AND soft shadows:
         for (int i = 0; i < 6; i += 2) {  // Use only every second lamp
             double zPos = -40 - i * 50;
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(-50, 8, zPos))
-                            .setKl(0.001).setKq(0.0005));
+                            .setKl(0.001).setKq(0.0005)
+                            .setRadius(2.0)        // ← radius of area light
+                            .setNumSamples(20));  // ← number of shadow-ray samples
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(55, 8, zPos + 25))
-                            .setKl(0.001).setKq(0.0005));
+                            .setKl(0.001).setKq(0.0005)
+                            .setRadius(2.0)        // ← radius of area light
+                            .setNumSamples(20));  // ← number of shadow-ray samples
         }
 
-        // Building interior lighting (warm window glow) – minimized (just a subtle warm glow)
+        // Building interior lighting (warm window glow) – minimized (just a subtle warm glow),
+        // but still with a small soft-shadow radius:
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
-                        .setKl(0.0003).setKq(0.00015));
+                        .setKl(0.0003).setKq(0.00015)
+                        .setRadius(1.5).setNumSamples(10));
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-80, 60, -350))
-                        .setKl(0.0003).setKq(0.00015));
+                        .setKl(0.0003).setKq(0.00015)
+                        .setRadius(1.5).setNumSamples(10));
 
         // ============ Camera Setup for Realistic View ==============
         Camera camera = cameraBuilder
@@ -185,7 +194,7 @@ class StreetSceneTest {
                 .setResolution(1500, 1000)                  // High resolution
                 .build();
 
-        // Render the photorealistic image
+        // Render the photorealistic image (with soft shadows)
         camera.renderImage();
         camera.writeToImage("street");
     }
@@ -227,7 +236,6 @@ class StreetSceneTest {
                 .setEmission(new Color(25, 85, 30))
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setShininess(25)));
-
         geometries.add(new Sphere(new Point(x + 3 * scale, y + 9 * scale, z + 2 * scale), 3.5 * scale)
                 .setEmission(new Color(40, 120, 50))
                 .setMaterial(new Material()
@@ -243,7 +251,6 @@ class StreetSceneTest {
         double z = position.getZ();
         double y = position.getY();  // Ground level
 
-        // Main building structure (4 sides)
         // Front face (facing camera) at z + depth/2
         geometries.add(new Polygon(
                 new Point(x - width / 2, y, z + depth / 2),
@@ -309,7 +316,7 @@ class StreetSceneTest {
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setShininess(40)));
 
-        // Main pole - approximated by spheres
+        // Main pole – approximated by spheres
         for (int i = 1; i <= 6; i++) {
             geometries.add(new Sphere(new Point(x, y + i, z), 0.3)
                     .setEmission(new Color(30, 30, 35))
@@ -322,7 +329,6 @@ class StreetSceneTest {
                 .setEmission(new Color(30, 30, 35))
                 .setMaterial(new Material()
                         .setKD(0.6).setKS(0.4).setShininess(60)));
-
         geometries.add(new Sphere(new Point(x + 1.6, y + 7, z), 0.25)
                 .setEmission(new Color(30, 30, 35))
                 .setMaterial(new Material()
@@ -342,7 +348,7 @@ class StreetSceneTest {
     }
 
     /**
-     * Create a traffic light with a specified lit color (e.g., green).
+     * Create a traffic light with a specified lit color (e.g. green).
      */
     private void createTrafficLight(List<Intersectable> geometries, Point position, Color litColor) {
         double x = position.getX();

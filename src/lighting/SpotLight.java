@@ -1,3 +1,4 @@
+// lighting/SpotLight.java
 package lighting;
 
 import primitives.*;
@@ -14,7 +15,7 @@ public class SpotLight extends PointLight {
      * Constructor for SpotLight.
      *
      * @param intensity The intensity of the light.
-     * @param position The position of the light source.
+     * @param position  The position of the light source.
      * @param direction The direction of the light beam.
      */
     public SpotLight(Color intensity, Point position, Vector direction) {
@@ -36,6 +37,8 @@ public class SpotLight extends PointLight {
     @Override
     public Color getIntensity(Point p) {
         double cosTheta = alignZero(direction.dotProduct(getL(p)));
-        return cosTheta <= 0 ? Color.BLACK : super.getIntensity(p).scale(Math.pow(cosTheta, narrowBeam));
+        return cosTheta <= 0
+                ? Color.BLACK
+                : super.getIntensity(p).scale(Math.pow(cosTheta, narrowBeam));
     }
 }
