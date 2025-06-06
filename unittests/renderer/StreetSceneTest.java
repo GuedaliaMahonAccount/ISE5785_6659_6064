@@ -13,24 +13,28 @@ import java.util.List;
 /**
  * Test class for rendering a colorful, realistic street scene with planted trees and no cars,
  * with windows removed and lighting toned down for a more balanced, “perfect” look,
- * now including circular-area soft shadows.
+ * now including circular‐area soft shadows. The camera is placed closer to the road so that
+ * you can see details of the trees and buildings more clearly. The building on the right
+ * (the “shopping mall”) has been moved off the road and given a non‐reflective material (KR = 0).
  */
 class StreetSceneTest {
     /** Scene for the test */
-    private final Scene scene = new Scene("Colorful Realistic Street Scene (No Windows, Soft Shadows)");
+    private final Scene scene = new Scene("Colorful Realistic Street Scene (Zoomed, No Reflection, Building Shifted)");
 
     /** Camera builder for the test */
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
             .setRayTracer(scene, RayTracerType.SIMPLE);
 
     /**
-     * Create a photorealistic street scene with vibrant colors, trees planted on the ground,
-     * without any vehicles, without windows on buildings, and with reduced lighting intensity,
-     * plus soft shadows.
+     * Create a photorealistic street scene with vibrant colors, trees, no cars,
+     * buildings without windows, reduced lighting intensity, plus soft shadows,
+     * with the camera placed closer to the street. The “shopping mall” building
+     * has been shifted off to the right so that it no longer intersects the road,
+     * and its material has zero reflectivity.
      */
     @Test
     void streetScene() {
-        // Create a list to hold all geometries
+        // List to hold all geometries
         List<Intersectable> geometries = new ArrayList<>();
 
         // ============ Ground and Road Foundation ==============
@@ -50,8 +54,8 @@ class StreetSceneTest {
                 .setMaterial(new Material()
                         .setKD(0.9).setKS(0.05).setShininess(15)));
 
-        // Road center line - dashed bright yellow
-        for (int z = 150; z >= -450; z -= 40) {
+        // Road center line - dashed bright yellow (shifted so first dash is closer)
+        for (int z = 70; z >= -450; z -= 40) {
             geometries.add(new Polygon(
                     new Point(-1, 0.15, z),
                     new Point(1, 0.15, z),
@@ -71,7 +75,6 @@ class StreetSceneTest {
                 .setEmission(new Color(200, 200, 200))  // Less intense white
                 .setMaterial(new Material()
                         .setKD(0.8).setKS(0.2).setShininess(25)));
-
         geometries.add(new Polygon(
                 new Point(22, 0.12, 200),
                 new Point(24, 0.12, 200),
@@ -87,57 +90,69 @@ class StreetSceneTest {
                 new Point(-25, 0.8, 200),
                 new Point(-25, 0.8, -500),
                 new Point(-45, 0.8, -500))
-                .setEmission(new Color(150, 150, 155))  // Darker gray
+                .setEmission(new Color(150, 150, 155))  // Slightly darker gray
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setShininess(40)));
-
         geometries.add(new Polygon(
                 new Point(25, 0.8, 200),
                 new Point(45, 0.8, 200),
                 new Point(45, 0.8, -500),
                 new Point(25, 0.8, -500))
-                .setEmission(new Color(150, 150, 155))  // Darker gray
+                .setEmission(new Color(150, 150, 155))  // Slightly darker gray
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setShininess(40)));
 
         // ============ Realistic Trees - Properly Planted ==============
-        // Left side trees - trunk base at ground level (y = 0)
+        // Left‐side trees (trunk at ground level y = 0)
         double[] leftTreeZ = {-80, -120, -160, -200, -240, -280};
         for (double zPos : leftTreeZ) {
             createTree(geometries, new Point(-60, 0, zPos), 1.0 + Math.random() * 0.3);
         }
 
-        // Right side trees - trunk base at ground level (y = 0)
+        // Right‐side trees (trunk at ground level y = 0)
         double[] rightTreeZ = {-70, -110, -150, -190, -230, -270, -310};
         for (double zPos : rightTreeZ) {
             createTree(geometries, new Point(70, 0, zPos), 0.8 + Math.random() * 0.4);
         }
 
         // ============ Realistic Buildings - Varied Colors, No Windows ==============
-        // Building 1 - Tall apartment building (blue)
-        createBuildingNoWindows(geometries, new Point(-150, 0, -300), 40, 80, 50, new Color(60, 90, 140));
+        // Building 1 - Tall blue apartment building (left side)
+        createBuildingNoWindows(geometries,
+                new Point(-150, 0, -300), 40, 80, 50,
+                new Color(60, 90, 140)); // Default reflectivity KR = 0.1
 
-        // Building 2 - Office building (terracotta)
-        createBuildingNoWindows(geometries, new Point(-80, 0, -350), 60, 120, 40, new Color(160, 80, 60));
+        // Building 2 - Terracotta office building (left‐center)
+        createBuildingNoWindows(geometries,
+                new Point(-80, 0, -350), 60, 120, 40,
+                new Color(160, 80, 60)); // Default reflectivity KR = 0.1
 
-        // Building 3 - Shopping mall (light purple)
-        createBuildingNoWindows(geometries, new Point(50, 0, -280), 100, 25, 60, new Color(140, 120, 160));
+        // Building 3 (Shopping mall) - moved far right (x = 100) so that it no longer
+        // overlaps the road. Also non‐reflective (KR = 0).
+        createNonReflectiveBuilding(geometries,
+                new Point(100, 0, -280),
+                new Color(140, 120, 160));
 
-        // Building 4 - Residential house (brick red)
-        createBuildingNoWindows(geometries, new Point(120, 0, -320), 25, 15, 20, new Color(130, 60, 50));
+        // Building 4 - Brick‐red residential house (far right)
+        createBuildingNoWindows(geometries,
+                new Point(120, 0, -320), 25, 15, 20,
+                new Color(130, 60, 50)); // Default reflectivity KR = 0.1
 
-        // Building 5 - Residential house (tan)
-        createBuildingNoWindows(geometries, new Point(150, 0, -315), 20, 18, 18, new Color(170, 140, 100));
+        // Building 5 - Tan residential house (far right, behind building 4)
+        createBuildingNoWindows(geometries,
+                new Point(150, 0, -315), 20, 18, 18,
+                new Color(170, 140, 100)); // Default reflectivity KR = 0.1
 
-        // Building 6 - High-rise in background (steel gray)
-        createBuildingNoWindows(geometries, new Point(-200, 0, -400), 30, 150, 25, new Color(60, 65, 70));
+        // Building 6 - Steel gray high‐rise in the background (far left)
+        createBuildingNoWindows(geometries,
+                new Point(-200, 0, -400), 30, 150, 25,
+                new Color(60, 65, 70)); // Default reflectivity KR = 0.1
 
         // ============ Street Infrastructure ==============
-        // Traffic lights (set to green)
-        createTrafficLight(geometries, new Point(30, 0, -80), new Color(40, 160, 40));
-        createTrafficLight(geometries, new Point(-30, 0, -150), new Color(40, 160, 40));
+        // -- Traffic lights have been removed to avoid “square” polygons --
+        // createTrafficLight(geometries, new Point(30, 0, -80), new Color(40, 160, 40));
+        // createTrafficLight(geometries, new Point(-30, 0, -150), new Color(40, 160, 40));
 
-        // Street lamps – now with soft shadows enabled
+        // Street lamps (with soft shadows)
         for (int i = 0; i < 6; i++) {
             double zPos = -40 - i * 50;
             createStreetLamp(geometries, new Point(-50, 0, zPos));
@@ -148,34 +163,33 @@ class StreetSceneTest {
         scene.geometries.add(geometries.toArray(new Intersectable[0]));
 
         // ============ Realistic Lighting – Further Reduced Intensity ==============
-        // Ambient light (much softer daylight)
+        // Ambient light (soft daylight)
         scene.setAmbientLight(new AmbientLight(new Color(20, 20, 25)));
 
-        // Main sun (warm late-afternoon) – significantly reduced intensity
+        // Main sun (warm late‐afternoon) – significantly reduced intensity
         scene.lights.add(
                 new DirectionalLight(new Color(90, 80, 70), new Vector(0.4, -0.6, -0.7)));
 
-        // Sky fill light (cooler) – significantly reduced intensity
+        // Sky fill light (cooler) – reduced intensity
         scene.lights.add(
                 new DirectionalLight(new Color(30, 35, 40), new Vector(-0.2, -0.3, 0.5)));
 
-        // Street lamp point lights – fewer lights, lowered intensity, AND soft shadows:
-        for (int i = 0; i < 6; i += 2) {  // Use only every second lamp
+        // Street lamp point lights – lower intensity, soft shadows:
+        for (int i = 0; i < 6; i += 2) { // Use only every second lamp
             double zPos = -40 - i * 50;
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(-50, 8, zPos))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(2.0)        // ← radius of area light
-                            .setNumSamples(20));  // ← number of shadow-ray samples
+                            .setRadius(2.0)
+                            .setNumSamples(20));
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(55, 8, zPos + 25))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(2.0)        // ← radius of area light
-                            .setNumSamples(20));  // ← number of shadow-ray samples
+                            .setRadius(2.0)
+                            .setNumSamples(20));
         }
 
-        // Building interior lighting (warm window glow) – minimized (just a subtle warm glow),
-        // but still with a small soft-shadow radius:
+        // Building interior lighting (warm glow, minimal intensity) with small soft‐shadow radius
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
                         .setKl(0.0003).setKq(0.00015)
@@ -185,13 +199,15 @@ class StreetSceneTest {
                         .setKl(0.0003).setKq(0.00015)
                         .setRadius(1.5).setNumSamples(10));
 
-        // ============ Camera Setup for Realistic View ==============
+        // ============ Camera Setup for Realistic Close‐Up View ==============
         Camera camera = cameraBuilder
-                .setLocation(new Point(-15, 12, 100))       // Slightly off-center, eye level
-                .setDirection(new Vector(0.1, -0.15, -1))   // Pointing down the street
+                // Move camera closer to the scene (z = 60 instead of 100) to zoom in
+                .setLocation(new Point(-15, 12, 60))
+                // Same general direction, pointing down the street
+                .setDirection(new Vector(0.1, -0.15, -1))
                 .setVpDistance(150)
-                .setVpSize(300, 200)                        // Wider aspect ratio
-                .setResolution(1500, 1000)                  // High resolution
+                .setVpSize(300, 200)
+                .setResolution(1500, 1000)
                 .build();
 
         // Render the photorealistic image (with soft shadows)
@@ -200,7 +216,7 @@ class StreetSceneTest {
     }
 
     /**
-     * Create a realistic tree with its trunk base at ground level (y = position.getY())
+     * Create a realistic tree with its trunk base at ground level (y = position.getY()).
      */
     private void createTree(List<Intersectable> geometries, Point position, double scale) {
         double x = position.getX();
@@ -220,7 +236,7 @@ class StreetSceneTest {
                         .setKD(0.8).setKS(0.1).setShininess(15)));
 
         // Trunk upper section
-        geometries.add(new Sphere(new Point(x, y + 5 * scale, z), 1.0 * scale)
+        geometries.add(new Sphere(new Point(x, y + 5 * scale, z), scale)
                 .setEmission(new Color(100, 70, 50))
                 .setMaterial(new Material()
                         .setKD(0.8).setKS(0.1).setShininess(15)));
@@ -244,9 +260,12 @@ class StreetSceneTest {
 
     /**
      * Create a realistic building with a colored facade but no windows.
+     * This version uses KR = 0.1 (reflectivity = 0.1).
      */
     private void createBuildingNoWindows(List<Intersectable> geometries,
-                                         Point position, double width, double height, double depth, Color color) {
+                                         Point position,
+                                         double width, double height, double depth,
+                                         Color color) {
         double x = position.getX();
         double z = position.getZ();
         double y = position.getY();  // Ground level
@@ -291,7 +310,7 @@ class StreetSceneTest {
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setKR(0.1).setShininess(40)));
 
-        // Building roof
+        // Roof
         geometries.add(new Polygon(
                 new Point(x - width / 2, y + height, z + depth / 2),
                 new Point(x + width / 2, y + height, z + depth / 2),
@@ -300,6 +319,68 @@ class StreetSceneTest {
                 .setEmission(color.scale(0.5))
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setKR(0.1).setShininess(40)));
+    }
+
+    /**
+     * Create a “non‐reflective” building with KR = 0.0. This is used for the “shopping mall”
+     * so that it does NOT reflect any trees or surroundings.
+     */
+    private void createNonReflectiveBuilding(List<Intersectable> geometries,
+                                             Point position,
+                                             Color color) {
+        double x = position.getX();
+        double z = position.getZ();
+        double y = position.getY();  // Ground level
+
+        // Front face (no reflection)
+        geometries.add(new Polygon(
+                new Point(x - (double) 100 / 2, y, z + (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y, z + (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y + (double) 25, z + (double) 60 / 2),
+                new Point(x - (double) 100 / 2, y + (double) 25, z + (double) 60 / 2))
+                .setEmission(color)
+                .setMaterial(new Material()
+                        .setKD(0.7).setKS(0.3).setKR(0.0).setShininess(40)));
+
+        // Back face
+        geometries.add(new Polygon(
+                new Point(x - (double) 100 / 2, y, z - (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y, z - (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y + (double) 25, z - (double) 60 / 2),
+                new Point(x - (double) 100 / 2, y + (double) 25, z - (double) 60 / 2))
+                .setEmission(color.scale(0.8))
+                .setMaterial(new Material()
+                        .setKD(0.7).setKS(0.3).setKR(0.0).setShininess(40)));
+
+        // Right side face
+        geometries.add(new Polygon(
+                new Point(x + (double) 100 / 2, y, z + (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y, z - (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y + (double) 25, z - (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y + (double) 25, z + (double) 60 / 2))
+                .setEmission(color.scale(0.7))
+                .setMaterial(new Material()
+                        .setKD(0.7).setKS(0.3).setKR(0.0).setShininess(40)));
+
+        // Left side face
+        geometries.add(new Polygon(
+                new Point(x - (double) 100 / 2, y, z + (double) 60 / 2),
+                new Point(x - (double) 100 / 2, y, z - (double) 60 / 2),
+                new Point(x - (double) 100 / 2, y + (double) 25, z - (double) 60 / 2),
+                new Point(x - (double) 100 / 2, y + (double) 25, z + (double) 60 / 2))
+                .setEmission(color.scale(0.7))
+                .setMaterial(new Material()
+                        .setKD(0.7).setKS(0.3).setKR(0.0).setShininess(40)));
+
+        // Roof
+        geometries.add(new Polygon(
+                new Point(x - (double) 100 / 2, y + (double) 25, z + (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y + (double) 25, z + (double) 60 / 2),
+                new Point(x + (double) 100 / 2, y + (double) 25, z - (double) 60 / 2),
+                new Point(x - (double) 100 / 2, y + (double) 25, z - (double) 60 / 2))
+                .setEmission(color.scale(0.5))
+                .setMaterial(new Material()
+                        .setKD(0.7).setKS(0.3).setKR(0.0).setShininess(40)));
     }
 
     /**
@@ -348,7 +429,7 @@ class StreetSceneTest {
     }
 
     /**
-     * Create a traffic light with a specified lit color (e.g. green).
+     * Create a traffic light (currently unused because we commented out its calls).
      */
     private void createTrafficLight(List<Intersectable> geometries, Point position, Color litColor) {
         double x = position.getX();
@@ -361,13 +442,13 @@ class StreetSceneTest {
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setShininess(30)));
 
-        // Traffic light pole (dark metal)
+        // Traffic light pole
         geometries.add(new Sphere(new Point(x, y + 6, z), 0.5)
                 .setEmission(new Color(40, 40, 40))
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setShininess(30)));
 
-        // Traffic light housing (matte black)
+        // Traffic light housing (matte black polygon) – these “square” polygons are removed
         geometries.add(new Polygon(
                 new Point(x - 1, y + 10, z - 0.5),
                 new Point(x + 1, y + 10, z - 0.5),
@@ -385,7 +466,7 @@ class StreetSceneTest {
     }
 
     /**
-     * Create a bus stop with a colored roof and metallic supports.
+     * Create a bus stop (not currently used).
      */
     private void createBusStop(List<Intersectable> geometries, Point position) {
         double x = position.getX();
