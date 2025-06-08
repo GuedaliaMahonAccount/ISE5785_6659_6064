@@ -14,8 +14,8 @@ import java.util.List;
  * no cars, and a realistic bus station on the right side at the beginning of the street.
  * All street lamps and the bus shelter face toward the road center.
  * The scene uses simplified facades (no windows), reduced lighting, and soft-area shadows.
- * The camera is placed closer to capture more detail. The shopping mall building is moved off the road
- * and set to non-reflective.
+ * The camera is placed closer to capture more detail. The shopping mall building is moved off
+ * the road and set to non-reflective.
  */
 public class StreetSceneTest {
 
@@ -85,9 +85,6 @@ public class StreetSceneTest {
                 .setEmission(new Color(150, 150, 155))
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
 
-        // ===== Bus Station (Right, Start of Road) =====
-//        createRealisticBusStation(geometries, new Point(35, 0.8, 20));
-
         // ===== Trees =====
         double[] leftTreeZ = {-80, -120, -160, -200, -240, -280};
         for (double zPos : leftTreeZ) {
@@ -106,7 +103,7 @@ public class StreetSceneTest {
         createBuildingNoWindows(geometries, new Point(150, 0, -315), 20, 18, 18, new Color(170,140,100));
         createBuildingNoWindows(geometries, new Point(-200,0,-400), 30,150, 25, new Color(60, 65, 70));
 
-        // ===== Street Lamps =====
+        // ===== Street Lamps (geometry only) =====
         for (int i = 0; i < 6; i++) {
             double zLeft  = -40 - i * 50;
             double zRight = zLeft + 25;
@@ -121,21 +118,38 @@ public class StreetSceneTest {
         scene.lights.add(new DirectionalLight(new Color(90,80,70), new Vector(0.4,-0.6,-0.7)));
         scene.lights.add(new DirectionalLight(new Color(30,35,40), new Vector(-0.2,-0.3,0.5)));
 
+        // soft-area street lamps: 81 samples each
         for (int i = 0; i < 6; i += 2) {
             double zLeft  = -40 - i * 50;
             double zRight = zLeft + 25;
-            scene.lights.add(new PointLight(new Color(100,90,80), new Point(-50,8,zLeft))
-                    .setKl(0.001).setKq(0.0005).setRadius(2.0).setNumSamples(20));
-            scene.lights.add(new PointLight(new Color(100,90,80), new Point( 55,8,zRight))
-                    .setKl(0.001).setKq(0.0005).setRadius(2.0).setNumSamples(20));
+            scene.lights.add(
+                    new PointLight(new Color(100,90,80), new Point(-50,8,zLeft))
+                            .setKl(0.001).setKq(0.0005)
+                            .setRadius(2.0).setNumSamples(81)
+            );
+            scene.lights.add(
+                    new PointLight(new Color(100,90,80), new Point( 55,8,zRight))
+                            .setKl(0.001).setKq(0.0005)
+                            .setRadius(2.0).setNumSamples(81)
+            );
         }
 
-        scene.lights.add(new PointLight(new Color(80,70,60), new Point(-150,40,-295))
-                .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(10));
-        scene.lights.add(new PointLight(new Color(80,70,60), new Point(-80,60,-350))
-                .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(10));
-        scene.lights.add(new PointLight(new Color(120,110,100), new Point(35,6,20))
-                .setKl(0.0005).setKq(0.0003).setRadius(1.0).setNumSamples(15));
+        // additional area lights: 81 samples each
+        scene.lights.add(
+                new PointLight(new Color(80,70,60), new Point(-150,40,-295))
+                        .setKl(0.0003).setKq(0.00015)
+                        .setRadius(1.5).setNumSamples(81)
+        );
+        scene.lights.add(
+                new PointLight(new Color(80,70,60), new Point(-80,60,-350))
+                        .setKl(0.0003).setKq(0.00015)
+                        .setRadius(1.5).setNumSamples(81)
+        );
+        scene.lights.add(
+                new PointLight(new Color(120,110,100), new Point(35,6,20))
+                        .setKl(0.0005).setKq(0.0003)
+                        .setRadius(1.0).setNumSamples(81)
+        );
 
         // ===== Camera Setup =====
         Camera camera = cameraBuilder
@@ -149,119 +163,6 @@ public class StreetSceneTest {
         camera.renderImage();
         camera.writeToImage("street");
     }
-
-//    private void createRealisticBusStation(List<Intersectable> geometries, Point pos) {
-//        double x = pos.getX(), y = pos.getY(), z = pos.getZ();
-//
-//        // Platform
-//        geometries.add(new Polygon(
-//                new Point(x-8, y+0.2, z-6), new Point(x+8, y+0.2, z-6),
-//                new Point(x+8, y+0.2, z+6), new Point(x-8, y+0.2, z+6))
-//                .setEmission(new Color(140,140,145))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
-//
-//        // Back wall (away from road)
-//        geometries.add(new Polygon(
-//                new Point(x-7, y+0.2, z-5), new Point(x+7, y+0.2, z-5),
-//                new Point(x+7, y+7,   z-5), new Point(x-7, y+7,   z-5))
-//                .setEmission(new Color(180,180,185))
-//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-//
-//        // Side panels (open toward road)
-//        geometries.add(new Polygon(
-//                new Point(x-7, y+0.2, z-5), new Point(x-7, y+0.2, z+2),
-//                new Point(x-7, y+7,   z+2), new Point(x-7, y+7,   z-5))
-//                .setEmission(new Color(170,170,175))
-//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-//        geometries.add(new Polygon(
-//                new Point(x+7, y+0.2, z-5), new Point(x+7, y+0.2, z+2),
-//                new Point(x+7, y+7,   z+2), new Point(x+7, y+7,   z-5))
-//                .setEmission(new Color(170,170,175))
-//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-//
-//        // Roof (extends toward road)
-//        geometries.add(new Polygon(
-//                new Point(x-7.5, y+7, z-5.5), new Point(x+7.5, y+7, z-5.5),
-//                new Point(x+7.5, y+7, z+3),    new Point(x-7.5, y+7, z+3))
-//                .setEmission(new Color(120,120,125))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
-//
-//        // Support pillars (continuous tubes)
-//        for (double h = 0.5; h <= 6.8; h += 0.3) {
-//            geometries.add(new Sphere(new Point(x-6.5, y+h, z+2.5), 0.2)
-//                    .setEmission(new Color(100,100,105))
-//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
-//            geometries.add(new Sphere(new Point(x+6.5, y+h, z+2.5), 0.2)
-//                    .setEmission(new Color(100,100,105))
-//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
-//            geometries.add(new Sphere(new Point(x-6.5, y+h, z-4.5), 0.2)
-//                    .setEmission(new Color(100,100,105))
-//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
-//            geometries.add(new Sphere(new Point(x+6.5, y+h, z-4.5), 0.2)
-//                    .setEmission(new Color(100,100,105))
-//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
-//        }
-//
-//        // Bench facing road
-//        geometries.add(new Polygon(
-//                new Point(x-4, y+1.8, z-3), new Point(x+4, y+1.8, z-3),
-//                new Point(x+4, y+2.2, z-2), new Point(x-4, y+2.2, z-2))
-//                .setEmission(new Color(80,60,40))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
-//        // Backrest toward shelter
-//        geometries.add(new Polygon(
-//                new Point(x-4, y+2.2, z-3.2), new Point(x+4, y+2.2, z-3.2),
-//                new Point(x+4, y+3.8, z-3),    new Point(x-4, y+3.8, z-3))
-//                .setEmission(new Color(85,65,45))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
-//
-//        // Bench legs
-//        for (double lx : new double[]{x-3, x+3}) {
-//            for (double lh = 0.4; lh <= 1.6; lh += 0.4) {
-//                geometries.add(new Sphere(new Point(lx, y+lh, z-2.8), 0.15)
-//                        .setEmission(new Color(60,60,65))
-//                        .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-//            }
-//        }
-//
-//        // Sign pole
-//        for (double h = 0.5; h <= 8.5; h += 0.25) {
-//            geometries.add(new Sphere(new Point(x+9, y+h, z), 0.15)
-//                    .setEmission(new Color(40,40,45))
-//                    .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60)));
-//        }
-//        // Yellow sign
-//        geometries.add(new Polygon(
-//                new Point(x+8.5, y+8.5, z-1.5), new Point(x+11.5, y+8.5, z-1.5),
-//                new Point(x+11.5, y+10,   z-1.5), new Point(x+8.5, y+10,   z-1.5))
-//                .setEmission(new Color(255,220,0))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(20)));
-//        // Black circle
-//        geometries.add(new Sphere(new Point(x+10, y+9.25, z-1.4), 0.4)
-//                .setEmission(new Color(20,20,20))
-//                .setMaterial(new Material().setKD(0.9).setKS(0.1).setShininess(10)));
-//
-//        // Trash bin
-//        geometries.add(new Sphere(new Point(x+5, y+1.5, z-4), 0.8)
-//                .setEmission(new Color(60,80,60))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
-//        geometries.add(new Sphere(new Point(x+5, y+2.5, z-4), 0.9)
-//                .setEmission(new Color(50,70,50))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
-//
-//        // Info board
-//        geometries.add(new Polygon(
-//                new Point(x-2, y+3,   z-4.8), new Point(x+2, y+3,   z-4.8),
-//                new Point(x+2, y+5.5, z-4.8), new Point(x-2, y+5.5, z-4.8))
-//                .setEmission(new Color(200,200,205))
-//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setKR(0.1).setShininess(50)));
-//        // Glass panel
-//        geometries.add(new Polygon(
-//                new Point(x-1.8, y+3.2, z-4.7), new Point(x+1.8, y+3.2, z-4.7),
-//                new Point(x+1.8, y+5.3, z-4.7), new Point(x-1.8, y+5.3, z-4.7))
-//                .setEmission(new Color(220,230,240))
-//                .setMaterial(new Material().setKD(0.1).setKS(0.9).setKT(0.8).setShininess(100)));
-//    }
 
     private void createStreetLamp(List<Intersectable> geometries, Point pos) {
         double x = pos.getX(), y = pos.getY(), z = pos.getZ();
@@ -416,3 +317,118 @@ public class StreetSceneTest {
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setKR(0.0).setShininess(40)));
     }
 }
+
+
+
+//    private void createRealisticBusStation(List<Intersectable> geometries, Point pos) {
+//        double x = pos.getX(), y = pos.getY(), z = pos.getZ();
+//
+//        // Platform
+//        geometries.add(new Polygon(
+//                new Point(x-8, y+0.2, z-6), new Point(x+8, y+0.2, z-6),
+//                new Point(x+8, y+0.2, z+6), new Point(x-8, y+0.2, z+6))
+//                .setEmission(new Color(140,140,145))
+//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
+//
+//        // Back wall (away from road)
+//        geometries.add(new Polygon(
+//                new Point(x-7, y+0.2, z-5), new Point(x+7, y+0.2, z-5),
+//                new Point(x+7, y+7,   z-5), new Point(x-7, y+7,   z-5))
+//                .setEmission(new Color(180,180,185))
+//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
+//
+//        // Side panels (open toward road)
+//        geometries.add(new Polygon(
+//                new Point(x-7, y+0.2, z-5), new Point(x-7, y+0.2, z+2),
+//                new Point(x-7, y+7,   z+2), new Point(x-7, y+7,   z-5))
+//                .setEmission(new Color(170,170,175))
+//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
+//        geometries.add(new Polygon(
+//                new Point(x+7, y+0.2, z-5), new Point(x+7, y+0.2, z+2),
+//                new Point(x+7, y+7,   z+2), new Point(x+7, y+7,   z-5))
+//                .setEmission(new Color(170,170,175))
+//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
+//
+//        // Roof (extends toward road)
+//        geometries.add(new Polygon(
+//                new Point(x-7.5, y+7, z-5.5), new Point(x+7.5, y+7, z-5.5),
+//                new Point(x+7.5, y+7, z+3),    new Point(x-7.5, y+7, z+3))
+//                .setEmission(new Color(120,120,125))
+//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
+//
+//        // Support pillars (continuous tubes)
+//        for (double h = 0.5; h <= 6.8; h += 0.3) {
+//            geometries.add(new Sphere(new Point(x-6.5, y+h, z+2.5), 0.2)
+//                    .setEmission(new Color(100,100,105))
+//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
+//            geometries.add(new Sphere(new Point(x+6.5, y+h, z+2.5), 0.2)
+//                    .setEmission(new Color(100,100,105))
+//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
+//            geometries.add(new Sphere(new Point(x-6.5, y+h, z-4.5), 0.2)
+//                    .setEmission(new Color(100,100,105))
+//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
+//            geometries.add(new Sphere(new Point(x+6.5, y+h, z-4.5), 0.2)
+//                    .setEmission(new Color(100,100,105))
+//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
+//        }
+//
+//        // Bench facing road
+//        geometries.add(new Polygon(
+//                new Point(x-4, y+1.8, z-3), new Point(x+4, y+1.8, z-3),
+//                new Point(x+4, y+2.2, z-2), new Point(x-4, y+2.2, z-2))
+//                .setEmission(new Color(80,60,40))
+//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
+//        // Backrest toward shelter
+//        geometries.add(new Polygon(
+//                new Point(x-4, y+2.2, z-3.2), new Point(x+4, y+2.2, z-3.2),
+//                new Point(x+4, y+3.8, z-3),    new Point(x-4, y+3.8, z-3))
+//                .setEmission(new Color(85,65,45))
+//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
+//
+//        // Bench legs
+//        for (double lx : new double[]{x-3, x+3}) {
+//            for (double lh = 0.4; lh <= 1.6; lh += 0.4) {
+//                geometries.add(new Sphere(new Point(lx, y+lh, z-2.8), 0.15)
+//                        .setEmission(new Color(60,60,65))
+//                        .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
+//            }
+//        }
+//
+//        // Sign pole
+//        for (double h = 0.5; h <= 8.5; h += 0.25) {
+//            geometries.add(new Sphere(new Point(x+9, y+h, z), 0.15)
+//                    .setEmission(new Color(40,40,45))
+//                    .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60)));
+//        }
+//        // Yellow sign
+//        geometries.add(new Polygon(
+//                new Point(x+8.5, y+8.5, z-1.5), new Point(x+11.5, y+8.5, z-1.5),
+//                new Point(x+11.5, y+10,   z-1.5), new Point(x+8.5, y+10,   z-1.5))
+//                .setEmission(new Color(255,220,0))
+//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(20)));
+//        // Black circle
+//        geometries.add(new Sphere(new Point(x+10, y+9.25, z-1.4), 0.4)
+//                .setEmission(new Color(20,20,20))
+//                .setMaterial(new Material().setKD(0.9).setKS(0.1).setShininess(10)));
+//
+//        // Trash bin
+//        geometries.add(new Sphere(new Point(x+5, y+1.5, z-4), 0.8)
+//                .setEmission(new Color(60,80,60))
+//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
+//        geometries.add(new Sphere(new Point(x+5, y+2.5, z-4), 0.9)
+//                .setEmission(new Color(50,70,50))
+//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
+//
+//        // Info board
+//        geometries.add(new Polygon(
+//                new Point(x-2, y+3,   z-4.8), new Point(x+2, y+3,   z-4.8),
+//                new Point(x+2, y+5.5, z-4.8), new Point(x-2, y+5.5, z-4.8))
+//                .setEmission(new Color(200,200,205))
+//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setKR(0.1).setShininess(50)));
+//        // Glass panel
+//        geometries.add(new Polygon(
+//                new Point(x-1.8, y+3.2, z-4.7), new Point(x+1.8, y+3.2, z-4.7),
+//                new Point(x+1.8, y+5.3, z-4.7), new Point(x-1.8, y+5.3, z-4.7))
+//                .setEmission(new Color(220,230,240))
+//                .setMaterial(new Material().setKD(0.1).setKS(0.9).setKT(0.8).setShininess(100)));
+//    }

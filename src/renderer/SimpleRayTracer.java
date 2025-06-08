@@ -1,11 +1,13 @@
 // renderer/SimpleRayTracer.java
 package renderer;
 
+import geometries.Intersectable;
 import primitives.*;
 import geometries.Intersectable.Intersection;
 import lighting.LightSource;
 import scene.Scene;
-
+import lighting.PointLight;
+import java.util.Random;
 import java.util.List;
 
 import static primitives.Util.alignZero;
@@ -27,6 +29,7 @@ public class SimpleRayTracer extends RayTracerBase {
     /** Initial attenuation factor. */
     private static final Double3 INITIAL_K = Double3.ONE;
 
+    private final Random random = new Random();
     /**
      * Constructs a SimpleRayTracer for the given scene.
      *
@@ -116,36 +119,62 @@ public class SimpleRayTracer extends RayTracerBase {
     }
 
     /**
-     * Marches a shadow ray to compute transparency between point and light.
-     *
-     * @param ip    the intersection record
-     * @param light the light source
-     * @param l     direction to light
-     * @param n     surface normal
-     * @param nl    dot product of normal and light direction
-     * @return cumulative transparency factor
+     * Computes average transparency (soft shadows) toward the light.
      */
-    private Double3 transparency(Intersection ip,
+    private Double3 transparency(Intersectable.Intersection ip,
                                  LightSource light,
                                  Vector l,
                                  Vector n,
                                  double nl) {
-        // Offset start to avoid self‐intersection
+        // 1. avoid self-intersection
+        Vector bias = n.scale(nl < 0 ? EPS : -EPS);
+        Point  p0   = ip.point.add(bias);
+
+        // 2. if this is a PointLight with >1 sample → super-sampling
+        if (light instanceof PointLight pl && pl.getNumSamples() > 1) {
+            int     samples   = pl.getNumSamples();      // e.g. 81
+            double  lightDist = light.getDistance(ip.point);
+            Double3 sumK      = Double3.ZERO;
+
+            for (int i = 0; i < samples; i++) {
+                // 3. pick one jittered point on the disk
+                Point samplePos = pl.getSamplePoint(ip.point);
+
+                // 4. cast shadow ray to that sample
+                Vector dir = samplePos.subtract(p0).normalize();
+                Ray    r   = new Ray(p0, dir);
+
+                // 5. see if anything blocks it before the light
+                List<Intersectable.Intersection> intersections =
+                        scene.getGeometries().calculateIntersections(r);
+                boolean blocked = intersections != null &&
+                        intersections.stream()
+                                .anyMatch(inter -> p0.distance(inter.point) < lightDist);
+
+                // 6. accumulate: 0 if blocked, 1 if clear
+                sumK = sumK.add(blocked ? Double3.ZERO : Double3.ONE);
+            }
+
+            // 7. return the average [0–1]
+            return sumK.scale(1.0 / samples);
+        }
+
+        // 8. otherwise fall back to your original single-ray code
         Vector shift = n.scale(nl < 0 ? EPS : -EPS);
         Point  p     = ip.point.add(shift);
-        Ray    r     = new Ray(p, l.scale(-1));
+        Ray    ray   = new Ray(p, l.scale(-1));
 
-        List<Intersection> lst = scene.getGeometries()
-                .calculateIntersections(r);
+        List<Intersectable.Intersection> lst =
+                scene.getGeometries().calculateIntersections(ray);
         if (lst == null) {
             return Double3.ONE;
         }
 
-        double lightDist = light.getDistance(ip.point);
-        Double3 ktr      = Double3.ONE;
-        for (Intersection inter : lst) {
+        double lightDistance = light.getDistance(ip.point);
+        Double3 ktr = Double3.ONE;
+        for (Intersectable.Intersection inter : lst) {
             double d = ip.point.distance(inter.point);
-            if (d < lightDist) {
+            if (d < lightDistance) {
                 ktr = ktr.product(inter.geometry.getMaterial().getKT());
                 if (ktr.lowerThan(MIN_K)) {
                     return Double3.ZERO;
@@ -154,6 +183,7 @@ public class SimpleRayTracer extends RayTracerBase {
         }
         return ktr;
     }
+
 
     /**
      * Combines reflections and refractions at the intersection.
