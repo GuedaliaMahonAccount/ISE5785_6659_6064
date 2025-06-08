@@ -6,34 +6,38 @@ import primitives.Vector;
 import primitives.Point;
 
 /**
- * Geometry abstract class represents all the geometric shapes
+ * Abstract base class for all geometric shapes in the scene.
+ * <p>
+ * Provides common properties such as emission color and material,
+ * and declares an abstract method to obtain the surface normal at a point.
+ * </p>
  */
 public abstract class Geometry extends Intersectable {
 
     /**
-     * The emission color of the geometry.
+     * Emission (intrinsic) color of the geometry used for shading.
      */
     protected Color emission = Color.BLACK;
 
     /**
-     * The material of the geometry.
+     * Material properties of the geometry (diffuse, specular, etc.).
      */
-    private Material material = new Material(); // Default initialization
+    private Material material = new Material();
 
     /**
-     * Gets the emission color of the geometry.
+     * Retrieves the emission color of the geometry.
      *
-     * @return the emission color
+     * @return the current emission color
      */
     public Color getEmission() {
         return emission;
     }
 
     /**
-     * Sets the emission color of the geometry.
+     * Sets the emission color for this geometry.
      *
-     * @param emission the new emission color
-     * @return the geometry itself (for method chaining)
+     * @param emission the emission color to set
+     * @return this geometry (for method chaining)
      */
     public Geometry setEmission(Color emission) {
         this.emission = emission;
@@ -41,27 +45,27 @@ public abstract class Geometry extends Intersectable {
     }
 
     /**
-     * Gets the normal vector to the geometry at a given point.
+     * Computes the normal vector to the geometry at the specified point.
      *
-     * @param p the point on the geometry
-     * @return the normal vector
+     * @param p the point on the surface where the normal is computed
+     * @return a normalized vector perpendicular to the surface at point p
      */
     public abstract Vector getNormal(Point p);
 
     /**
-     * Gets the material of the geometry.
+     * Retrieves the material of the geometry.
      *
-     * @return the material of the geometry
+     * @return the material properties
      */
     public Material getMaterial() {
         return material;
     }
 
     /**
-     * Sets the material of the geometry.
+     * Sets the material properties for this geometry.
      *
      * @param material the material to set
-     * @return the geometry itself (for method chaining)
+     * @return this geometry (for method chaining)
      */
     public Geometry setMaterial(Material material) {
         this.material = material;

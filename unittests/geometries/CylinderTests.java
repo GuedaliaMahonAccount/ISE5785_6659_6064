@@ -8,8 +8,29 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import geometries.Intersectable.GeoPoint;
 
+/**
+ * Unit tests for the {@link Cylinder} class.
+ * <p>
+ * Validates the behavior of findGeoIntersections under various scenarios,
+ * including side intersections, cap intersections, tangent rays,
+ * and boundary conditions.
+ * </p>
+ */
 class CylinderTests {
 
+    /**
+     * Tests the findGeoIntersections method with rays in different positions:
+     * <ul>
+     *   <li>TC01: Ray crosses the cylinder's side (two points)</li>
+     *   <li>TC02: Ray starts inside the cylinder and exits (one point)</li>
+     *   <li>TC03: Ray intersects the top cap only (one point)</li>
+     *   <li>TC04: Ray intersects both side and bottom cap (two points)</li>
+     *   <li>TC05: Ray passes through both caps or side+cap (two points)</li>
+     *   <li>TC06: Tangent ray to the side (no intersection)</li>
+     *   <li>TC07: Ray originates on the surface and goes outward (no intersection)</li>
+     *   <li>TC08: Ray parallel to axis inside cylinder (cap intersections expected)</li>
+     * </ul>
+     */
     @Test
     void testFindIntersections() {
         Cylinder cyl = new Cylinder(

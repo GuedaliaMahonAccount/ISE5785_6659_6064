@@ -8,31 +8,48 @@ import java.util.List;
 
 /**
  * A composite of multiple Intersectable geometries.
- * Collects all Intersection points from its children.
+ * <p>
+ * Aggregates a collection of geometries and computes all intersection points
+ * between a given ray and the contained geometries.
+ * </p>
  */
 public class Geometries extends Intersectable {
+    /**
+     * The internal list of geometries making up this group.
+     */
     private final List<Intersectable> geometries;
 
-    /** Create an empty Geometries collection for later additions. */
+    /**
+     * Creates an empty Geometries collection. Additional geometries can be added later.
+     */
     public Geometries() {
         this.geometries = new LinkedList<>();
     }
 
-    /** Build a Geometries group from any number of Intersectables. */
+    /**
+     * Constructs a Geometries group containing the given intersectable geometries.
+     *
+     * @param geometries one or more Intersectable objects to include in this group
+     */
     public Geometries(Intersectable... geometries) {
         this.geometries = new LinkedList<>(Arrays.asList(geometries));
     }
 
     /**
-     * Add one or more geometries to this group.
-     * @param geometries the geometries to add
+     * Adds one or more geometries to this group.
+     *
+     * @param geometries one or more Intersectable objects to add
      */
     public void add(Intersectable... geometries) {
         this.geometries.addAll(Arrays.asList(geometries));
     }
 
     /**
-     * NVI helper: for each child, collect its Intersection list.
+     * Calculates all intersection points between the provided ray and
+     * each geometry in this collection.
+     *
+     * @param ray the ray to test for intersections
+     * @return a list of Intersection objects, or null if there are no intersections
      */
     @Override
     protected List<Intersection> calculateIntersectionsHelper(Ray ray) {
@@ -47,13 +64,20 @@ public class Geometries extends Intersectable {
     }
 
     /**
-     * Check if there are no geometries in the group.
-     * @return true if empty, false otherwise
+     * Checks whether this Geometries group contains any geometries.
+     *
+     * @return true if the group is empty, false otherwise
      */
     public boolean isEmpty() {
         return geometries.isEmpty();
     }
 
+    /**
+     * Returns a string representation of this group,
+     * listing all contained geometries.
+     *
+     * @return a descriptive string of this Geometries group
+     */
     @Override
     public String toString() {
         return "Geometries" + geometries;

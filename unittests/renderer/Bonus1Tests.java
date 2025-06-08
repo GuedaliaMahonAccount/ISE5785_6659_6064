@@ -7,13 +7,26 @@ import geometries.*;
 import lighting.*;
 import java.util.*;
 
+/**
+ * Test application for rendering a bonus scene with various lights and geometries.
+ * <p>
+ * Sets up a scene with ambient and point lights, configures a camera, adds geometries,
+ * and renders the image to a file named "bonus1".
+ * </p>
+ */
 public class Bonus1Tests {
+    /**
+     * Entry point for Bonus1Tests.
+     * Builds the scene, configures lighting and camera, adds geometries, and renders the image.
+     *
+     * @param args Command-line arguments (not used).
+     */
     public static void main(String[] args) {
         // 1. Scene & ambient/light
         Scene scene = new Scene("Bonus1");
-        // low‐intensity ambient (20,20,20) × 0.1 ⇒ a soft global light
+        // Low-intensity ambient (20,20,20) × 0.1 ⇒ a soft global light
         scene.setAmbientLight(new AmbientLight(new Color(20, 20, 20).scale(0.1)));
-        // one point light for highlights & shadows
+        // One point light for highlights & shadows
         scene.lights.add(
                 new PointLight(new Color(255, 240, 240), new Point(50, 50, 50))
                         .setKl(0.0004).setKq(0.0000006)
@@ -84,8 +97,6 @@ public class Bonus1Tests {
                 new Point(80, 20, -80))
                 .setEmission(new Color(200, 200, 50))
                 .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(50)));
-
-        // (You can add more tiny shapes here to exceed 10)
 
         // 4. Attach to scene
         scene.geometries.add(list.toArray(new Intersectable[0]));

@@ -1,4 +1,3 @@
-// lighting/AmbientLight.java
 package lighting;
 
 import primitives.Color;
@@ -8,14 +7,19 @@ import java.util.Objects;
  * Class representing ambient light in a 3D scene.
  */
 public class AmbientLight extends Light {
-    // The intensity of the ambient light (IA)
+    /**
+     * The intensity of the ambient light (IA).
+     */
     private final Color intensity;
 
-    // A constant representing no ambient light (black)
+    /**
+     * A constant representing no ambient light (black).
+     */
     public static final AmbientLight NONE = new AmbientLight(Color.BLACK);
 
     /**
-     * Constructor that sets the ambient light intensity.
+     * Constructs an AmbientLight with the specified intensity.
+     *
      * @param intensity The color intensity of the ambient light.
      */
     public AmbientLight(Color intensity) {
@@ -25,6 +29,7 @@ public class AmbientLight extends Light {
 
     /**
      * Returns the intensity of the ambient light.
+     *
      * @return The color intensity.
      */
     @Override
