@@ -391,41 +391,50 @@ class StreetSceneTest {
         double y = position.getY();
         double z = position.getZ();
 
-        // Solid base at ground level
-        geometries.add(new Sphere(new Point(x, y + 0.5, z), 0.7)
+        // Solid base at ground level - slightly larger and more stable looking
+        geometries.add(new Sphere(new Point(x, y + 0.5, z), 0.8)
                 .setEmission(new Color(40, 40, 45))
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setShininess(40)));
 
-        // Main pole – approximated by spheres
-        for (int i = 1; i <= 6; i++) {
-            geometries.add(new Sphere(new Point(x, y + i, z), 0.3)
+        // Main vertical pole - use a cylinder or create overlapping spheres for continuity
+        for (double height = 1.0; height <= 7.0; height += 0.4) {
+            geometries.add(new Sphere(new Point(x, y + height, z), 0.35)
                     .setEmission(new Color(30, 30, 35))
                     .setMaterial(new Material()
                             .setKD(0.6).setKS(0.4).setShininess(60)));
         }
 
-        // Horizontal arm extending outward
-        geometries.add(new Sphere(new Point(x + 0.8, y + 7, z), 0.25)
-                .setEmission(new Color(30, 30, 35))
-                .setMaterial(new Material()
-                        .setKD(0.6).setKS(0.4).setShininess(60)));
-        geometries.add(new Sphere(new Point(x + 1.6, y + 7, z), 0.25)
-                .setEmission(new Color(30, 30, 35))
-                .setMaterial(new Material()
-                        .setKD(0.6).setKS(0.4).setShininess(60)));
+        // Horizontal arm extending outward - overlapping spheres for continuity
+        for (double armPos = 0.4; armPos <= 2.4; armPos += 0.4) {
+            geometries.add(new Sphere(new Point(x + armPos, y + 7, z), 0.28)
+                    .setEmission(new Color(30, 30, 35))
+                    .setMaterial(new Material()
+                            .setKD(0.6).setKS(0.4).setShininess(60)));
+        }
 
-        // Lamp support
-        geometries.add(new Sphere(new Point(x + 2.2, y + 7, z), 0.3)
+        // Lamp support bracket - connecting the horizontal arm to the lamp
+        geometries.add(new Sphere(new Point(x + 2.4, y + 6.8, z), 0.25)
                 .setEmission(new Color(40, 40, 45))
                 .setMaterial(new Material()
                         .setKD(0.7).setKS(0.3).setShininess(40)));
 
-        // Lamp itself (warm yellow glass, more subtle)
-        geometries.add(new Sphere(new Point(x + 2.2, y + 6.2, z), 1.0)
-                .setEmission(new Color(160, 140, 100))
+        geometries.add(new Sphere(new Point(x + 2.4, y + 6.5, z), 0.25)
+                .setEmission(new Color(40, 40, 45))
                 .setMaterial(new Material()
-                        .setKD(0.4).setKS(0.6).setKT(0.2).setShininess(80)));
+                        .setKD(0.7).setKS(0.3).setShininess(40)));
+
+        // Lamp housing (dark metal casing around the light)
+        geometries.add(new Sphere(new Point(x + 2.4, y + 6.0, z), 1.1)
+                .setEmission(new Color(25, 25, 30))
+                .setMaterial(new Material()
+                        .setKD(0.8).setKS(0.2).setShininess(30)));
+
+        // ✅ Updated lamp itself at correct position
+        geometries.add(new Sphere(new Point(x + 2.4, y + 6.0, z), 1.5) // sphere at correct lamp position
+                .setEmission(new Color(255, 230, 180)) // warm light glow
+                .setMaterial(new Material()
+                        .setKD(0.7).setKS(0.3).setShininess(10)));
     }
 
     /**
