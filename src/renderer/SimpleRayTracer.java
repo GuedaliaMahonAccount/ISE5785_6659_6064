@@ -4,7 +4,6 @@ package renderer;
 import primitives.*;
 import geometries.Intersectable.Intersection;
 import lighting.LightSource;
-import lighting.PointLight;
 import scene.Scene;
 
 import java.util.List;
@@ -13,15 +12,15 @@ import static primitives.Util.alignZero;
 
 /**
  * {@code SimpleRayTracer} extends {@link RayTracerBase} to support
- * Phong shading with shadows, reflections and simple transparency (including soft shadows).
+ * Phong shading with shadows, reflections and simple transparency.
  */
 public class SimpleRayTracer extends RayTracerBase {
-    /** Offset to avoid self-intersection when spawning new rays. */
+    /** Offset to avoid self‐intersection when spawning new rays. */
     public static final double DELTA = 0.1;
 
-    private static final double EPS       = 0.1;    // shadow-ray bias
-    private static final int    MAX_LEVEL = 10;     // recursion depth
-    private static final double MIN_K     = 0.001;  // attenuation threshold
+    private static final double EPS       = 0.1;     // shadow‐ray bias
+    private static final int    MAX_LEVEL = 10;      // recursion depth
+    private static final double MIN_K     = 0.001;   // attenuation threshold
     private static final Double3 INITIAL_K = Double3.ONE;
 
     public SimpleRayTracer(Scene scene) {
@@ -46,7 +45,7 @@ public class SimpleRayTracer extends RayTracerBase {
     }
 
     private Color calcColor(Intersection ip, Ray ray, int level, Double3 kAcc) {
-        // 1. local lighting (with partial-transparency shadows, including soft shadows)
+        // 1. local lighting (with partial‐transparency shadows)
         Color local = calcLocalEffects(ip, ray);
 
         // 2. stop if recursion depth reached
@@ -72,10 +71,10 @@ public class SimpleRayTracer extends RayTracerBase {
             Vector l  = light.getL(ip.point);
             double nl = alignZero(n.dotProduct(l));
             if (nl * nv > 0) {
-                // compute partial-transparency factor (kT) with soft shadows
-                Double3 ktr = transparency(ip, light, n, nl);
+                // compute partial‐transparency factor
+                Double3 ktr = transparency(ip, light, l, n, nl);
                 if (!ktr.lowerThan(MIN_K)) {
-                    // attenuate light by transparency factor
+                    // attenuate light by transparency
                     Color   iL   = light.getIntensity(ip.point).scale(ktr);
                     Double3 diff = calcDiffusive(m, nl);
                     Double3 spec = calcSpecular(m, n, l, nl, v);
@@ -86,67 +85,30 @@ public class SimpleRayTracer extends RayTracerBase {
         return result;
     }
 
+
     /**
      * Computes the accumulated transparency between the intersection
-     * point and the area light source by firing multiple shadow rays to random samples
-     * on the circular disk. Averages their kT results → soft shadows.
-     *
-     * @param ip    the intersection to shade
-     * @param light the LightSource (must be a PointLight to do area sampling)
-     * @param n     the normal at the intersection
-     * @param nl    the dot product of n and central light direction
-     * @return averaged transparency factor (Double3 in [0,1])
+     * point and the light source by marching a shadow‐ray and multiplying
+     * all kT values of intervening geometries.
      */
     private Double3 transparency(Intersection ip,
                                  LightSource light,
+                                 Vector l,
                                  Vector n,
                                  double nl) {
-        // 1. offset intersection slightly to avoid self-intersection
+        // 1. offset the start point to avoid self‐intersection
         Vector shift = n.scale(nl < 0 ? EPS : -EPS);
-        Point  baseP = ip.point.add(shift);
+        Point  p     = ip.point.add(shift);
+        Ray    r     = new Ray(p, l.scale(-1));
 
-        // If not a PointLight (e.g., directional), fallback to single shadow ray
-        if (!(light instanceof PointLight)) {
-            // regular single-ray shadow
-            Ray r = new Ray(baseP, light.getL(ip.point).scale(-1));
-            return singleShadowTransparency(ip, light, r);
-        }
-
-        // Cast multiple shadow rays toward random points on the circular area
-        PointLight pLight = (PointLight) light;
-        int samples = pLight.getNumSamples();
-        Double3 totalKt = Double3.ZERO;
-
-        for (int i = 0; i < samples; i++) {
-            // a) choose a random sample point on the circular disk
-            Point samplePos = pLight.getSamplePoint(ip.point);
-            Vector lSample = baseP.subtract(samplePos).normalize();
-            Ray rSample = new Ray(baseP, lSample);
-
-            // b) check occlusion along this ray
-            Double3 kt = singleShadowTransparency(ip, light, rSample);
-            totalKt = totalKt.add(kt);
-        }
-
-        // return average transparency
-        return totalKt.scale(1.0 / samples);
-    }
-
-    /**
-     * Helper: cast a single shadow-ray toward the given LightSource origin (or sample point).
-     * Returns the kT product of all occluders (or ZERO if fully blocked).
-     */
-    private Double3 singleShadowTransparency(Intersection ip,
-                                             LightSource light,
-                                             Ray r) {
-        // gather all intersections along the shadow ray
+        // 2. gather all intersections along the shadow ray
         List<Intersection> lst = scene.getGeometries()
                 .calculateIntersections(r);
         if (lst == null) {
             return Double3.ONE;
         }
 
-        // only those closer than the (sampled) light count
+        // 3. only those closer than the light actually count
         double lightDist = light.getDistance(ip.point);
         Double3 ktr      = Double3.ONE;
         for (Intersection inter : lst) {
@@ -154,7 +116,7 @@ public class SimpleRayTracer extends RayTracerBase {
             if (d < lightDist) {
                 ktr = ktr.product(inter.geometry.getMaterial().getKT());
                 if (ktr.lowerThan(MIN_K)) {
-                    // completely opaque → full shadow for this sample
+                    // completely opaque ⇒ full shadow
                     return Double3.ZERO;
                 }
             }
@@ -204,7 +166,7 @@ public class SimpleRayTracer extends RayTracerBase {
     }
 
     private Ray constructRefractedRay(Intersection ip, Ray ray) {
-        // straight-through transparency
+        // straight‐through transparency
         return new Ray(ip.point, ray.getDir(), ip.geometry.getNormal(ip.point));
     }
 
