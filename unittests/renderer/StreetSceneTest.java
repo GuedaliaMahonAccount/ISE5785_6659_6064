@@ -137,7 +137,7 @@ public class StreetSceneTest {
 
         // additional area lights: 300 samples each
         scene.lights.add(
-                new PointLight(new Color(8add more and more sampling0,70,60), new Point(-150,40,-295))
+                new PointLight(new Color(80,70,60), new Point(-150,40,-295))
                         .setKl(0.0003).setKq(0.00015)
                         .setRadius(1.5).setNumSamples(300)
         );
