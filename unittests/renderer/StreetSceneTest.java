@@ -160,7 +160,7 @@ public class StreetSceneTest {
                 .setVpSize(300, 200)
                 .setResolution(1500, 1000)
                 .setMultithreading(-2)    // use (CPU cores − 2) threads
-                .setDebugPrint(0.1)       // print progress every 1%
+                .setDebugPrint(1.0)       // print progress every 1%
                 .build();
 
         System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());

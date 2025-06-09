@@ -19,37 +19,37 @@ class PixelManager {
     }
 
     /** Maximum rows of pixels */
-    private int                 maxRows       = 0;
+    private final int maxRows;
     /** Maximum columns of pixels */
-    private int                 maxCols       = 0;
+    private final int maxCols;
     /** Total amount of pixels in the generated image */
-    private long                totalPixels   = 0l;
+    private final long totalPixels;
 
     /** Currently processed row of pixels */
-    private volatile int        cRow          = 0;
+    private volatile int cRow          = 0;
     /** Currently processed column of pixels */
-    private volatile int        cCol          = -1;
+    private volatile int cCol          = -1;
     /** Amount of pixels that have been processed */
-    private volatile long       pixels        = 0l;
+    private volatile long pixels        = 0L;
     /** Last printed progress update percentage */
-    private volatile int        lastPrinted   = 0;
+    private volatile int lastPrinted   = 0;
 
     /** Flag of debug printing of progress percentage */
-    private boolean             print         = false;
+    private final boolean print;
     /** Progress percentage printing interval */
-    private long                printInterval = 100l;
+    private long printInterval = 100L;
     /** Printing format */
-    private static final String PRINT_FORMAT  = "%5.1f%%\r";
+    private static final String PRINT_FORMAT  = "%5.1f%%\n";
     /**
      * Mutual exclusion object for synchronizing next pixel allocation between
      * threads
      */
-    private Object              mutexNext     = new Object();
+    private final Object mutexNext     = new Object();
     /**
      * Mutual exclusion object for printing progress percentage in console window
      * by different threads
      */
-    private Object              mutexPixels   = new Object();
+    private final Object mutexPixels   = new Object();
 
     /**
      * Initialize pixel manager data for multi-threading
@@ -59,7 +59,8 @@ class PixelManager {
      *                 required
      */
     PixelManager(int maxRows, int maxCols, double... interval) {
-        if (interval.length > 1) throw new IllegalArgumentException("only up to one interval argument is allowed");
+        if (interval.length > 1)
+            throw new IllegalArgumentException("only up to one interval argument is allowed");
         this.maxRows  = maxRows;
         this.maxCols  = maxCols;
         totalPixels   = (long) maxRows * maxCols;
@@ -73,7 +74,6 @@ class PixelManager {
      * function is critical section for all the threads, and the pixel manager data
      * is the shared data of this critical section.<br/>
      * The function provides next available pixel number each call.
-     * @return true if next pixel is allocated, false if there are no more pixels
      */
     Pixel nextPixel() {
         synchronized (mutexNext) {
@@ -81,12 +81,12 @@ class PixelManager {
 
             ++cCol;
             if (cCol < maxCols)
-                return new Pixel(cCol, cRow);  // FIXED: corrected parameter order
+                return new Pixel(cCol, cRow);
 
             cCol = 0;
             ++cRow;
             if (cRow < maxRows)
-                return new Pixel(cCol, cRow);  // FIXED: corrected parameter order
+                return new Pixel(cCol, cRow);
         }
         return null;
     }
@@ -98,7 +98,7 @@ class PixelManager {
         synchronized (mutexPixels) {
             ++pixels;
             if (print) {
-                percentage = (int) (1000l * pixels / totalPixels);
+                percentage = (int) (1000L * pixels / totalPixels);
                 if (percentage - lastPrinted >= printInterval) {
                     lastPrinted = percentage;
                     flag        = true;
