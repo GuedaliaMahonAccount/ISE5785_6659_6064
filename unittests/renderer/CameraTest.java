@@ -107,6 +107,6 @@ class CameraTest {
 
       // BV01: invalid target at camera location
       assertThrows(IllegalArgumentException.class,
-              () -> cameraBuilder.setDirection(new Point(0, 10, 0)).build());
+              () -> cameraBuilder.setDirection(Point.ZERO).build());
    }
 }

@@ -154,8 +154,8 @@ public class Camera implements Cloneable {
         }
 
         public Builder setDirection(Vector vTo, Vector vUp) {
-            camera.vTo  = vTo.normalize();
-            camera.vUp  = vUp.normalize();
+            camera.vTo = vTo.normalize();
+            camera.vUp = vUp.normalize();
             camera.vRight = camera.vTo.crossProduct(camera.vUp).normalize();
             return this;
         }
@@ -177,7 +177,7 @@ public class Camera implements Cloneable {
         }
 
         public Builder setVpSize(double w, double h) {
-            camera.width  = w;
+            camera.width = w;
             camera.height = h;
             return this;
         }
@@ -190,17 +190,17 @@ public class Camera implements Cloneable {
         public Builder setRayTracer(Scene scene, RayTracerType type) {
             switch (type) {
                 case SIMPLE -> camera.rayTracer = new SimpleRayTracer(scene);
-                default     -> throw new IllegalArgumentException("Unsupported RayTracerType");
+                default -> throw new IllegalArgumentException("Unsupported RayTracerType");
             }
             return this;
         }
 
         /**
          * Configure multithreading:
-         *   -2 → auto (cores – SPARE_THREADS)
-         *   -1 → parallel streams
-         *    0 → off
-         *   >0 → exact thread count
+         * -2 → auto (cores – SPARE_THREADS)
+         * -1 → parallel streams
+         * 0 → off
+         * >0 → exact thread count
          */
         public Builder setMultithreading(int threads) {
             if (threads < -2)
@@ -226,15 +226,21 @@ public class Camera implements Cloneable {
 
         public Camera build() {
             // defaults & validation
-            if (camera.p0 == null)   camera.p0 = Point.ZERO;
+            if (camera.p0 == null) camera.p0 = Point.ZERO;
             if (camera.distance == 0) throw new IllegalStateException("View‐plane distance not set");
             if (camera.width == 0 || camera.height == 0)
                 throw new IllegalStateException("View‐plane size not set");
 
-            // compute vTo
+            // compute vTo from target if specified
             if (target != null) {
-                camera.vTo = target.subtract(camera.p0).normalize();
+                // Check if target equals current camera position BEFORE computing direction
+                if (target.equals(camera.p0)) {
+                    throw new IllegalArgumentException("Target cannot be at camera location");
+                }
+                Vector toTarget = target.subtract(camera.p0);
+                camera.vTo = toTarget.normalize();
             }
+
             // default vUp
             if (camera.vUp == null) {
                 camera.vUp = Vector.AXIS_Y;
@@ -253,9 +259,10 @@ public class Camera implements Cloneable {
             }
 
             // finalize basis & view‐plane center
-            camera.vRight  = camera.vTo.crossProduct(camera.vUp).normalize();
+            camera.vRight = camera.vTo.crossProduct(camera.vUp).normalize();
             camera.pcenter = camera.p0.add(camera.vTo.scale(camera.distance));
 
+            // CRITICAL: Return cloned camera, not the builder's internal camera
             return camera.clone();
         }
     }
