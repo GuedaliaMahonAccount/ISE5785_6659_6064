@@ -175,12 +175,12 @@ public class StreetSceneTest {
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(-50, 8, zLeft))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(10.0).setNumSamples(1)
+                            .setRadius(10.0).setNumSamples(81)
             );
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(55, 8, zRight))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(10.0).setNumSamples(1)
+                            .setRadius(10.0).setNumSamples(81)
             );
         }
 
@@ -188,17 +188,17 @@ public class StreetSceneTest {
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(1)
+                        .setRadius(1.5).setNumSamples(81)
         );
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-80, 60, -350))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(1)
+                        .setRadius(1.5).setNumSamples(81)
         );
         scene.lights.add(
                 new PointLight(new Color(120, 110, 100), new Point(35, 6, 20))
                         .setKl(0.0005).setKq(0.0003)
-                        .setRadius(1.0).setNumSamples(1)
+                        .setRadius(1.0).setNumSamples(81)
         );
 
         // ===== Camera Setup with Multithreading, Logging & AA =====
@@ -213,7 +213,7 @@ public class StreetSceneTest {
                 .build();
         // Enable 9×9 grid super-sampling 81 samples per pixel
         camera.setSamplingConfig(new SamplingConfig(
-                1, TargetShape.RECTANGLE, SamplingPattern.GRID
+                81, TargetShape.RECTANGLE, SamplingPattern.GRID
         ));
 
         System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
