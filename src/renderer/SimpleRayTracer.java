@@ -105,20 +105,18 @@ public class SimpleRayTracer extends RayTracerBase {
         if (light instanceof PointLight pl && pl.getNumSamples() > 1) {
             int     samples   = pl.getNumSamples();         // e.g. 81, 300, etc.
             double  lightDist = light.getDistance(ip.point);
-            Double3 sumK      = Double3.ZERO;
-
+            Double3 sumK = Double3.ZERO;
             for (int i = 0; i < samples; i++) {
-                // get one random sample on the light’s disk
-                Point samplePos = pl.getSamplePoint(ip.point);
-                Vector dir      = samplePos.subtract(p0).normalize();
-                Ray    r        = new Ray(p0, dir);
-
+                Point samplePos  = pl.getSamplePoint(ip.point);
+                Vector dirSample = samplePos.subtract(p0).normalize();
+                double  maxDist  = p0.distance(samplePos);    // ← correct per‐sample threshold
+                Ray     shadow   = new Ray(p0, dirSample);
                 List<Intersection> hits =
-                        scene.getGeometries().calculateIntersections(r);
+                        scene.getGeometries().calculateIntersections(shadow);
                 boolean blocked = hits != null &&
-                        hits.stream()
-                                .anyMatch(inter -> p0.distance(inter.point) < lightDist);
-
+                        hits.stream().anyMatch(inter ->
+                                p0.distance(inter.point) < maxDist
+                        );
                 sumK = sumK.add(blocked ? Double3.ZERO : Double3.ONE);
             }
             return sumK.scale(1.0 / samples);

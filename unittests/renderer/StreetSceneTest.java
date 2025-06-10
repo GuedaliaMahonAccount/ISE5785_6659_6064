@@ -126,12 +126,12 @@ public class StreetSceneTest {
             scene.lights.add(
                     new PointLight(new Color(100,90,80), new Point(-50,8,zLeft))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(2.0).setNumSamples(300)
+                            .setRadius(2.0).setNumSamples(81)
             );
             scene.lights.add(
                     new PointLight(new Color(100,90,80), new Point(55,8,zRight))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(2.0).setNumSamples(300)
+                            .setRadius(2.0).setNumSamples(81)
             );
         }
 
@@ -139,17 +139,17 @@ public class StreetSceneTest {
         scene.lights.add(
                 new PointLight(new Color(80,70,60), new Point(-150,40,-295))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(300)
+                        .setRadius(1.5).setNumSamples(81)
         );
         scene.lights.add(
                 new PointLight(new Color(80,70,60), new Point(-80,60,-350))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(300)
+                        .setRadius(1.5).setNumSamples(81)
         );
         scene.lights.add(
                 new PointLight(new Color(120,110,100), new Point(35,6,20))
                         .setKl(0.0005).setKq(0.0003)
-                        .setRadius(1.0).setNumSamples(300)
+                        .setRadius(1.0).setNumSamples(81)
         );
 
         // ===== Camera Setup with Multithreading & Logging =====
