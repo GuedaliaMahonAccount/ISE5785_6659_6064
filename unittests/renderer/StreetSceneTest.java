@@ -73,30 +73,46 @@ public class StreetSceneTest {
                 .setEmission(new Color(200, 200, 200))
                 .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
 
-        // Sidewalks
+        // Sidewalks - lowered height from 2.0 to 1.2
         geometries.add(new Polygon(
-                new Point(-45, 0.8, 200),
-                new Point(-25, 0.8, 200),
-                new Point(-25, 0.8, -500),
-                new Point(-45, 0.8, -500))
+                new Point(-45, 1.2, 200),
+                new Point(-25, 1.2, 200),
+                new Point(-25, 1.2, -500),
+                new Point(-45, 1.2, -500))
                 .setEmission(new Color(150, 150, 155))
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
         geometries.add(new Polygon(
-                new Point(25, 0.8, 200),
-                new Point(45, 0.8, 200),
-                new Point(45, 0.8, -500),
-                new Point(25, 0.8, -500))
+                new Point(25, 1.2, 200),
+                new Point(45, 1.2, 200),
+                new Point(45, 1.2, -500),
+                new Point(25, 1.2, -500))
                 .setEmission(new Color(150, 150, 155))
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
 
+// Curbs - adjusted to match new sidewalk height
+        geometries.add(new Polygon(
+                new Point(-25, 0.12, 200),
+                new Point(-25, 1.2, 200),
+                new Point(-25, 1.2, -500),
+                new Point(-25, 0.12, -500))
+                .setEmission(new Color(120, 120, 125))
+                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
+
+        geometries.add(new Polygon(
+                new Point(25, 0.12, 200),
+                new Point(25, 1.2, 200),
+                new Point(25, 1.2, -500),
+                new Point(25, 0.12, -500))
+                .setEmission(new Color(120, 120, 125))
+                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
         // ===== Trees =====
         double[] leftTreeZ = {-80, -120, -160, -200, -240, -280};
         for (double zPos : leftTreeZ) {
-            createTree(geometries, new Point(-60, 0, zPos), 1.0 + Math.random() * 0.3);
+            createTree(geometries, new Point(-60, 1.2, zPos), 1.0 + Math.random() * 0.3);
         }
         double[] rightTreeZ = {-70, -110, -150, -190, -230, -270, -310};
         for (double zPos : rightTreeZ) {
-            createTree(geometries, new Point(70, 0, zPos), 0.8 + Math.random() * 0.4);
+            createTree(geometries, new Point(70, 1.2, zPos), 0.8 + Math.random() * 0.4);
         }
 
         // ===== Buildings (No Windows) =====
@@ -111,9 +127,39 @@ public class StreetSceneTest {
         for (int i = 0; i < 6; i++) {
             double zLeft  = -40 - i * 50;
             double zRight = zLeft + 25;
-            createStreetLamp(geometries, new Point(-50, 0, zLeft));
-            createStreetLamp(geometries, new Point( 55, 0, zRight));
+            // Add 1.2 to y-coordinate to position lamps on the sidewalk
+            createStreetLamp(geometries, new Point(-50, 1.2, zLeft));
+            createStreetLamp(geometries, new Point( 55, 1.2, zRight));
         }
+
+        // Moon sphere moved further right and with enhanced emission
+        geometries.add(new Sphere(new Point(400, 250, -800), 30) // Moved further right, slightly smaller
+                .setEmission(new Color(255, 230, 180)) // EXACT SAME emission as street lamp light spheres!
+                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(10))); // Same material as street lamps
+
+
+        // Enhanced moon light with much stronger intensity
+        scene.lights.add(
+                new PointLight(new Color(800, 750, 500), new Point(400, 250, -800))
+                        .setKl(0.0000005).setKq(0.00000001) // Extremely low attenuation
+                        .setRadius(15.0).setNumSamples(1) // Wider radius
+        );
+
+
+        // Sky background - much higher diffuse coefficient
+        geometries.add(new Sphere(new Point(0, 0, -1000), 2000)
+                .setEmission(new Color(2, 2, 8)) // Darker blue to show light better
+                .setMaterial(new Material()
+                        .setKD(0.7)    // Much higher diffuse coefficient
+                        .setKS(0.4)    // Reduced specular to let diffuse dominate
+                        .setKR(0.3)    // Keep reflection coefficient
+                        .setKT(0.0)    // No transparency
+                        .setShininess(10))); // Lower shininess for broader light effect
+
+
+
+
+
 
         scene.geometries.add(geometries.toArray(new Intersectable[0]));
 
@@ -129,12 +175,12 @@ public class StreetSceneTest {
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(-50, 8, zLeft))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(10.0).setNumSamples(81)
+                            .setRadius(10.0).setNumSamples(1)
             );
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(55, 8, zRight))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(10.0).setNumSamples(81)
+                            .setRadius(10.0).setNumSamples(1)
             );
         }
 
@@ -142,17 +188,17 @@ public class StreetSceneTest {
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(81)
+                        .setRadius(1.5).setNumSamples(1)
         );
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-80, 60, -350))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(81)
+                        .setRadius(1.5).setNumSamples(1)
         );
         scene.lights.add(
                 new PointLight(new Color(120, 110, 100), new Point(35, 6, 20))
                         .setKl(0.0005).setKq(0.0003)
-                        .setRadius(1.0).setNumSamples(81)
+                        .setRadius(1.0).setNumSamples(1)
         );
 
         // ===== Camera Setup with Multithreading, Logging & AA =====
@@ -165,9 +211,9 @@ public class StreetSceneTest {
                 .setMultithreading(-2)
                 .setDebugPrint(1.0)
                 .build();
-        // Enable 9×9 grid super-sampling
+        // Enable 9×9 grid super-sampling 81 samples per pixel
         camera.setSamplingConfig(new SamplingConfig(
-                81, TargetShape.RECTANGLE, SamplingPattern.GRID
+                1, TargetShape.RECTANGLE, SamplingPattern.GRID
         ));
 
         System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
@@ -234,17 +280,21 @@ public class StreetSceneTest {
      */
     private void createTree(List<Intersectable> geometries, Point pos, double scale) {
         double x = pos.getX(), y = pos.getY(), z = pos.getZ();
-        geometries.add(new Sphere(new Point(x, y + 1.5 * scale, z), 1.5 * scale)
+
+        // Lower the trunk position to start from the ground
+        geometries.add(new Sphere(new Point(x, y + 0.0 * scale, z), 1.5 * scale)
                 .setEmission(new Color(80,50,30)).setMaterial(new Material().setKD(0.8).setKS(0.1).setShininess(15)));
-        geometries.add(new Sphere(new Point(x, y + 4.0 * scale, z), 1.2 * scale)
+        geometries.add(new Sphere(new Point(x, y + 2.5 * scale, z), 1.2 * scale)
                 .setEmission(new Color(90,60,40)).setMaterial(new Material().setKD(0.8).setKS(0.1).setShininess(15)));
-        geometries.add(new Sphere(new Point(x, y + 5.0 * scale, z), scale)
+        geometries.add(new Sphere(new Point(x, y + 3.5 * scale, z), scale)
                 .setEmission(new Color(100,70,50)).setMaterial(new Material().setKD(0.8).setKS(0.1).setShininess(15)));
-        geometries.add(new Sphere(new Point(x, y +10.0 * scale, z), 6.0 * scale)
+
+        // Lower the foliage by the same amount (1.5 scale units)
+        geometries.add(new Sphere(new Point(x, y + 8.5 * scale, z), 6.0 * scale)
                 .setEmission(new Color(30,100,40)).setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(25)));
-        geometries.add(new Sphere(new Point(x - 2*scale, y + 8.0 * scale, z - 1*scale), 4.0 * scale)
+        geometries.add(new Sphere(new Point(x - 2*scale, y + 6.5 * scale, z - 1*scale), 4.0 * scale)
                 .setEmission(new Color(25,85,30)).setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(25)));
-        geometries.add(new Sphere(new Point(x + 3*scale, y + 9.0 * scale, z + 2*scale), 3.5 * scale)
+        geometries.add(new Sphere(new Point(x + 3*scale, y + 7.5 * scale, z + 2*scale), 3.5 * scale)
                 .setEmission(new Color(40,120,50)).setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(25)));
     }
 
