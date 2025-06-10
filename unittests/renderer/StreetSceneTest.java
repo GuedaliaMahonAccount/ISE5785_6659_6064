@@ -115,42 +115,45 @@ public class StreetSceneTest {
         scene.geometries.add(geometries.toArray(new Intersectable[0]));
 
         // ===== Lighting =====
-        scene.setAmbientLight(new AmbientLight(new Color(20,20,25)));
-        scene.lights.add(new DirectionalLight(new Color(90,80,70), new Vector(0.4,-0.6,-0.7)));
-        scene.lights.add(new DirectionalLight(new Color(30,35,40), new Vector(-0.2,-0.3,0.5)));
+        scene.setAmbientLight(new AmbientLight(new Color(20, 20, 25)));
+        scene.lights.add(new DirectionalLight(new Color(90, 80, 70), new Vector(0.4, -0.6, -0.7)));
+        scene.lights.add(new DirectionalLight(new Color(30, 35, 40), new Vector(-0.2, -0.3, 0.5)));
 
-        // soft-area street lamps: 300 samples each
-        for (int i = 0; i < 6; i += 2) {
+// soft-area street lamps: 300 samples each
+        for (int i = 0; i < 6; i++) {
             double zLeft  = -40 - i * 50;
             double zRight = zLeft + 25;
             scene.lights.add(
-                    new PointLight(new Color(100,90,80), new Point(-50,8,zLeft))
+                    new PointLight(new Color(100, 90, 80), new Point(-50, 8, zLeft))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(2.0).setNumSamples(81)
+                            .setRadius(10.0)      // larger disk for visible penumbra
+                            .setNumSamples(300)   // match your “300 samples” comment
             );
             scene.lights.add(
-                    new PointLight(new Color(100,90,80), new Point(55,8,zRight))
+                    new PointLight(new Color(100, 90, 80), new Point(55, 8, zRight))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(2.0).setNumSamples(81)
+                            .setRadius(10.0)
+                            .setNumSamples(300)
             );
         }
 
-        // additional area lights: 300 samples each
+// additional area lights: 300 samples each
         scene.lights.add(
-                new PointLight(new Color(80,70,60), new Point(-150,40,-295))
+                new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(81)
+                        .setRadius(1.5).setNumSamples(300)
         );
         scene.lights.add(
-                new PointLight(new Color(80,70,60), new Point(-80,60,-350))
+                new PointLight(new Color(80, 70, 60), new Point(-80, 60, -350))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(81)
+                        .setRadius(1.5).setNumSamples(300)
         );
         scene.lights.add(
-                new PointLight(new Color(120,110,100), new Point(35,6,20))
+                new PointLight(new Color(120, 110, 100), new Point(35, 6, 20))
                         .setKl(0.0005).setKq(0.0003)
-                        .setRadius(1.0).setNumSamples(81)
+                        .setRadius(1.0).setNumSamples(300)
         );
+
 
         // ===== Camera Setup with Multithreading & Logging =====
         Camera camera = cameraBuilder
