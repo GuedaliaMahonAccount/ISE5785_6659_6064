@@ -1,33 +1,47 @@
+// src/main/java/renderer/Camera.java
 package renderer;
 
 import primitives.Color;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
+import renderer.sampling.SamplingConfig;
+import renderer.sampling.SuperSamplingBlackboard;
 import scene.Scene;
 import lighting.*;
 import geometries.*;
-
-import java.util.LinkedList;
+import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static primitives.Util.isZero;  // for Gram–Schmidt correction
+import static primitives.Util.isZero;
 
 /**
  * The Camera class represents a virtual camera in a 3D scene.
- * It defines the camera’s position, orientation, and view‐plane properties,
- * and provides methods to construct rays, render images (single‐ or multi‐threaded),
- * and overlay a grid.
+ * It supports super‐sampling (anti‐aliasing) via a SamplingConfig,
+ * multithreaded rendering, progress logging, and direct ray construction.
  */
 public class Camera implements Cloneable {
+    // === super‐sampling fields ===
+    private SamplingConfig samplingConfig = new SamplingConfig();
+    private SuperSamplingBlackboard blackboard = new SuperSamplingBlackboard(samplingConfig);
+
+    /**
+     * Configure anti‐aliasing parameters.
+     */
+    public Camera setSamplingConfig(SamplingConfig config) {
+        this.samplingConfig = config;
+        this.blackboard = new SuperSamplingBlackboard(config);
+        return this;
+    }
+
     // === multithreading & progress tracking fields ===
     private int threadsCount       = 0;
     private static final int SPARE_THREADS = 2;
     private double printInterval   = 0;
     private PixelManager pixelManager;
 
-    // === camera coordinate frame & view‐plane ===
+    // === camera coordinate frame & view-plane ===
     private Vector vTo, vUp, vRight;
     private Point  p0, pcenter;
     private double distance, width, height;
@@ -43,11 +57,12 @@ public class Camera implements Cloneable {
     }
 
     /**
-     * Build a ray from the eye through pixel (j,i) on an nX×nY view‐plane.
+     * Constructs a ray from the eye through pixel (j,i) on an nX×nY view-plane.
+     * This restores API for direct ray tests.
      */
     public Ray constructRay(int nX, int nY, int j, int i) {
-        double pixelW = width  / nX;
-        double pixelH = height / nY;
+        double pixelW = width  / (double) nX;
+        double pixelH = height / (double) nY;
 
         double xJ = (j - (nX - 1) / 2.0) * pixelW;
         double yI = (i - (nY - 1) / 2.0) * pixelH;
@@ -60,12 +75,29 @@ public class Camera implements Cloneable {
     }
 
     /**
-     * Trace and write one pixel, then report progress.
+     * Single-pixel rendering with optional super-sampling.
      */
     private void castRay(int nX, int nY, int j, int i) {
-        Ray   ray = constructRay(nX, nY, j, i);
-        Color col = rayTracer.traceRay(ray);
-        imageWriter.writePixel(j, i, col);
+        double pixelW = width  / nX;
+        double pixelH = height / nY;
+
+        List<Point2D.Double> samples = blackboard.getSampleOffsets(pixelW, pixelH);
+        Color pixelColor = new Color(0, 0, 0);
+
+        for (Point2D.Double off : samples) {
+            double xJ = (j - (nX - 1) / 2.0) * pixelW + off.x;
+            double yI = (i - (nY - 1) / 2.0) * pixelH + off.y;
+
+            Point pIJ = pcenter;
+            if (xJ != 0) pIJ = pIJ.add(vRight.scale(xJ));
+            if (yI != 0) pIJ = pIJ.add(vUp.scale(-yI));
+
+            Ray sampleRay = new Ray(p0, pIJ.subtract(p0));
+            pixelColor = pixelColor.add(rayTracer.traceRay(sampleRay));
+        }
+
+        pixelColor = pixelColor.scale(1.0 / samples.size());
+        imageWriter.writePixel(j, i, pixelColor);
         pixelManager.pixelDone();
     }
 
@@ -80,7 +112,7 @@ public class Camera implements Cloneable {
         return this;
     }
 
-    /** Parallel streams rendering. */
+    /** Parallel-streams rendering. */
     private Camera renderImageStream() {
         int nX = imageWriter.nX(), nY = imageWriter.nY();
         IntStream.range(0, nY).parallel()
@@ -89,10 +121,10 @@ public class Camera implements Cloneable {
         return this;
     }
 
-    /** Raw‐threads rendering via PixelManager. */
+    /** Raw-threads rendering via PixelManager. */
     private Camera renderImageRawThreads() {
         int nX = imageWriter.nX(), nY = imageWriter.nY();
-        List<Thread> threads = new LinkedList<>();
+        List<Thread> threads = new java.util.LinkedList<>();
         for (int t = 0; t < threadsCount; t++) {
             threads.add(new Thread(() -> {
                 PixelManager.Pixel p;
@@ -199,7 +231,7 @@ public class Camera implements Cloneable {
          * Configure multithreading:
          * -2 → auto (cores – SPARE_THREADS)
          * -1 → parallel streams
-         * 0 → off
+         *  0 → off
          * >0 → exact thread count
          */
         public Builder setMultithreading(int threads) {
@@ -219,21 +251,18 @@ public class Camera implements Cloneable {
          */
         public Builder setDebugPrint(double interval) {
             if (interval < 0)
-                throw new IllegalArgumentException("Print interval must be non‐negative");
+                throw new IllegalArgumentException("Print interval must be non-negative");
             camera.printInterval = interval;
             return this;
         }
 
         public Camera build() {
-            // defaults & validation
             if (camera.p0 == null) camera.p0 = Point.ZERO;
-            if (camera.distance == 0) throw new IllegalStateException("View‐plane distance not set");
+            if (camera.distance == 0) throw new IllegalStateException("View-plane distance not set");
             if (camera.width == 0 || camera.height == 0)
-                throw new IllegalStateException("View‐plane size not set");
+                throw new IllegalStateException("View-plane size not set");
 
-            // compute vTo from target if specified
             if (target != null) {
-                // Check if target equals current camera position BEFORE computing direction
                 if (target.equals(camera.p0)) {
                     throw new IllegalArgumentException("Target cannot be at camera location");
                 }
@@ -241,16 +270,13 @@ public class Camera implements Cloneable {
                 camera.vTo = toTarget.normalize();
             }
 
-            // default vUp
             if (camera.vUp == null) {
                 camera.vUp = Vector.AXIS_Y;
             }
-            // default vTo
             if (camera.vTo == null) {
                 camera.vTo = Vector.AXIS_Z;
             }
 
-            // Gram–Schmidt: make vUp orthogonal to vTo
             if (!isZero(camera.vTo.dotProduct(camera.vUp))) {
                 camera.vUp = camera.vTo
                         .crossProduct(camera.vUp)
@@ -258,11 +284,9 @@ public class Camera implements Cloneable {
                         .normalize();
             }
 
-            // finalize basis & view‐plane center
             camera.vRight = camera.vTo.crossProduct(camera.vUp).normalize();
             camera.pcenter = camera.p0.add(camera.vTo.scale(camera.distance));
 
-            // CRITICAL: Return cloned camera, not the builder's internal camera
             return camera.clone();
         }
     }
