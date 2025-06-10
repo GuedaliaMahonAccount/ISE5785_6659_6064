@@ -122,6 +122,7 @@ public class SimpleRayTracer extends RayTracerBase {
             return sumK.scale(1.0 / samples);
         }
 
+
         // hard shadows: single shadow ray toward light
         Ray shadowRay = new Ray(p0, l);
         List<Intersection> blockers =
