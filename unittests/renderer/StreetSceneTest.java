@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * Test class for rendering a colorful, realistic street scene with planted trees,
- * no cars, and a realistic bus station on the right side at the beginning of the street.
+ * no cars, a realistic crescent moon providing gentle lighting, and elevated sidewalks.
  * All street lamps and the bus shelter face toward the road center.
  * The scene uses simplified facades (no windows), reduced lighting, and soft-area shadows.
  * The camera is placed closer to capture more detail. The shopping mall building is moved off
@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class StreetSceneTest {
 
-    private final Scene scene = new Scene("Colorful Realistic Street Scene");
+    private final Scene scene = new Scene("Colorful Realistic Street Scene with Crescent Moon");
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
             .setRayTracer(scene, RayTracerType.SIMPLE);
 
@@ -73,7 +73,7 @@ public class StreetSceneTest {
                 .setEmission(new Color(200, 200, 200))
                 .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
 
-        // Sidewalks - lowered height from 2.0 to 1.2
+        // Sidewalks - lowered height from 2.0 to 1.2 (from second version)
         geometries.add(new Polygon(
                 new Point(-45, 1.2, 200),
                 new Point(-25, 1.2, 200),
@@ -89,7 +89,7 @@ public class StreetSceneTest {
                 .setEmission(new Color(150, 150, 155))
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
 
-// Curbs - adjusted to match new sidewalk height
+        // Curbs - adjusted to match new sidewalk height (from second version)
         geometries.add(new Polygon(
                 new Point(-25, 0.12, 200),
                 new Point(-25, 1.2, 200),
@@ -105,7 +105,23 @@ public class StreetSceneTest {
                 new Point(25, 0.12, -500))
                 .setEmission(new Color(120, 120, 125))
                 .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
-        // ===== Trees =====
+
+        // ===== Crescent Moon (from first version) =====
+        // Create a crescent moon positioned more to the center/right and smaller
+        // Main moon body (smaller)
+        geometries.add(new Sphere(new Point(50, 120, -250), 15)
+                .setEmission(new Color(220, 220, 180))
+                .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(30)));
+
+        // Moon surface details (smaller craters on visible crescent)
+        geometries.add(new Sphere(new Point(52, 118, -248), 2)
+                .setEmission(new Color(180, 180, 140))
+                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(20)));
+        geometries.add(new Sphere(new Point(55, 125, -252), 1.5)
+                .setEmission(new Color(190, 190, 150))
+                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(20)));
+
+        // ===== Trees (adjusted for sidewalk height from second version) =====
         double[] leftTreeZ = {-80, -120, -160, -200, -240, -280};
         for (double zPos : leftTreeZ) {
             createTree(geometries, new Point(-60, 1.2, zPos), 1.0 + Math.random() * 0.3);
@@ -123,7 +139,7 @@ public class StreetSceneTest {
         createBuildingNoWindows(geometries, new Point(150, 0, -315), 20, 18, 18, new Color(170,140,100));
         createBuildingNoWindows(geometries, new Point(-200,0,-400), 30,150, 25, new Color(60, 65, 70));
 
-        // ===== Street Lamps (geometry only) =====
+        // ===== Street Lamps (geometry only, adjusted for sidewalk height) =====
         for (int i = 0; i < 6; i++) {
             double zLeft  = -40 - i * 50;
             double zRight = zLeft + 25;
@@ -132,59 +148,48 @@ public class StreetSceneTest {
             createStreetLamp(geometries, new Point( 55, 1.2, zRight));
         }
 
-        // Moon sphere moved further right and with enhanced emission
-        geometries.add(new Sphere(new Point(400, 250, -800), 30) // Moved further right, slightly smaller
-                .setEmission(new Color(255, 230, 180)) // EXACT SAME emission as street lamp light spheres!
-                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(10))); // Same material as street lamps
-
-
-        // Enhanced moon light with much stronger intensity
-        scene.lights.add(
-                new PointLight(new Color(800, 750, 500), new Point(400, 250, -800))
-                        .setKl(0.0000005).setKq(0.00000001) // Extremely low attenuation
-                        .setRadius(15.0).setNumSamples(1) // Wider radius
-        );
-
-
-        // Sky background - much higher diffuse coefficient
-        geometries.add(new Sphere(new Point(0, 0, -1000), 2000)
-                .setEmission(new Color(2, 2, 8)) // Darker blue to show light better
-                .setMaterial(new Material()
-                        .setKD(0.7)    // Much higher diffuse coefficient
-                        .setKS(0.4)    // Reduced specular to let diffuse dominate
-                        .setKR(0.3)    // Keep reflection coefficient
-                        .setKT(0.0)    // No transparency
-                        .setShininess(10))); // Lower shininess for broader light effect
-
-
-
-
-
-
         scene.geometries.add(geometries.toArray(new Intersectable[0]));
 
         // ===== Lighting =====
-        scene.setAmbientLight(new AmbientLight(new Color(20, 20, 25)));
-        scene.lights.add(new DirectionalLight(new Color(90, 80, 70), new Vector(0.4, -0.6, -0.7)));
-        scene.lights.add(new DirectionalLight(new Color(30, 35, 40), new Vector(-0.2, -0.3, 0.5)));
+        // Darker ambient light for night scene
+        scene.setAmbientLight(new AmbientLight(new Color(15, 15, 20)));
 
-        // Soft-area street lamps: 81 samples each
+        // Reduced directional lights for night atmosphere
+        scene.lights.add(new DirectionalLight(new Color(60, 50, 40), new Vector(0.4, -0.6, -0.7)));
+        scene.lights.add(new DirectionalLight(new Color(20, 25, 30), new Vector(-0.2, -0.3, 0.5)));
+
+        // ===== Moon Light (adjusted position and direction) =====
+        // Soft moonlight from the new moon position, directed more downward
+        scene.lights.add(
+                new PointLight(new Color(90, 85, 65), new Point(50, 120, -250))
+                        .setKl(0.00001).setKq(0.000005)
+                        .setRadius(10.0).setNumSamples(81)
+        );
+
+        // Additional moonlight to illuminate the ground below
+        scene.lights.add(
+                new SpotLight(new Color(70, 65, 50), new Point(50, 120, -250), new Vector(0.1, -1, 0.3))
+                        .setKl(0.00005).setKq(0.00001)
+                        .setNarrowBeam(15)
+        );
+
+        // Soft-area street lamps: 81 samples each (from first version)
         for (int i = 0; i < 6; i++) {
             double zLeft  = -40 - i * 50;
             double zRight = zLeft + 25;
             scene.lights.add(
-                    new PointLight(new Color(100, 90, 80), new Point(-50, 8, zLeft))
+                    new PointLight(new Color(100, 90, 80), new Point(-50, 8 + 1.2, zLeft)) // Adjusted for sidewalk height
                             .setKl(0.001).setKq(0.0005)
                             .setRadius(10.0).setNumSamples(81)
             );
             scene.lights.add(
-                    new PointLight(new Color(100, 90, 80), new Point(55, 8, zRight))
+                    new PointLight(new Color(100, 90, 80), new Point(55, 8 + 1.2, zRight)) // Adjusted for sidewalk height
                             .setKl(0.001).setKq(0.0005)
                             .setRadius(10.0).setNumSamples(81)
             );
         }
 
-        // Additional area lights: 81 samples each
+        // Additional area lights: 81 samples each (from first version)
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
                         .setKl(0.0003).setKq(0.00015)
@@ -211,7 +216,7 @@ public class StreetSceneTest {
                 .setMultithreading(-2)
                 .setDebugPrint(1.0)
                 .build();
-        // Enable 9×9 grid super-sampling 81 samples per pixel
+        // Enable 81 sample grid super-sampling (from first version)
         camera.setSamplingConfig(new SamplingConfig(
                 81, TargetShape.RECTANGLE, SamplingPattern.GRID
         ));
@@ -223,8 +228,8 @@ public class StreetSceneTest {
         long tEnd = System.currentTimeMillis();
         System.out.printf("Render completed in %.3f seconds.%n", (tEnd - tStart) / 1000.0);
 
-        camera.writeToImage("street1");
-        System.out.println("Image written to file: street1.png");
+        camera.writeToImage("street2");
+        System.out.println("Image written to file: street2.png");
     }
 
     /**
@@ -277,11 +282,12 @@ public class StreetSceneTest {
     /**
      * Creates a tree at the specified position with a given scale.
      * The tree consists of multiple spheres representing the trunk and foliage.
+     * Adjusted for proper positioning on sidewalks.
      */
     private void createTree(List<Intersectable> geometries, Point pos, double scale) {
         double x = pos.getX(), y = pos.getY(), z = pos.getZ();
 
-        // Lower the trunk position to start from the ground
+        // Lower the trunk position to start from the sidewalk level
         geometries.add(new Sphere(new Point(x, y + 0.0 * scale, z), 1.5 * scale)
                 .setEmission(new Color(80,50,30)).setMaterial(new Material().setKD(0.8).setKS(0.1).setShininess(15)));
         geometries.add(new Sphere(new Point(x, y + 2.5 * scale, z), 1.2 * scale)
@@ -402,124 +408,3 @@ public class StreetSceneTest {
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setKR(0.0).setShininess(40)));
     }
 }
-
-
-
-//    /**
-//     * Creates a realistic bus station at the specified position.
-//     * The bus station consists of a platform, back wall, side panels, roof,
-//     * support pillars, a bench, and a sign pole.
-//     * The bench faces the road, and the sign pole is placed at the end of the platform.
-//     */
-//    private void createRealisticBusStation(List<Intersectable> geometries, Point pos) {
-//        double x = pos.getX(), y = pos.getY(), z = pos.getZ();
-//
-//        // Platform
-//        geometries.add(new Polygon(
-//                new Point(x-8, y+0.2, z-6), new Point(x+8, y+0.2, z-6),
-//                new Point(x+8, y+0.2, z+6), new Point(x-8, y+0.2, z+6))
-//                .setEmission(new Color(140,140,145))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
-//
-//        // Back wall (away from road)
-//        geometries.add(new Polygon(
-//                new Point(x-7, y+0.2, z-5), new Point(x+7, y+0.2, z-5),
-//                new Point(x+7, y+7,   z-5), new Point(x-7, y+7,   z-5))
-//                .setEmission(new Color(180,180,185))
-//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-//
-//        // Side panels (open toward road)
-//        geometries.add(new Polygon(
-//                new Point(x-7, y+0.2, z-5), new Point(x-7, y+0.2, z+2),
-//                new Point(x-7, y+7,   z+2), new Point(x-7, y+7,   z-5))
-//                .setEmission(new Color(170,170,175))
-//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-//        geometries.add(new Polygon(
-//                new Point(x+7, y+0.2, z-5), new Point(x+7, y+0.2, z+2),
-//                new Point(x+7, y+7,   z+2), new Point(x+7, y+7,   z-5))
-//                .setEmission(new Color(170,170,175))
-//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-//
-//        // Roof (extends toward road)
-//        geometries.add(new Polygon(
-//                new Point(x-7.5, y+7, z-5.5), new Point(x+7.5, y+7, z-5.5),
-//                new Point(x+7.5, y+7, z+3),    new Point(x-7.5, y+7, z+3))
-//                .setEmission(new Color(120,120,125))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
-//
-//        // Support pillars (continuous tubes)
-//        for (double h = 0.5; h <= 6.8; h += 0.3) {
-//            geometries.add(new Sphere(new Point(x-6.5, y+h, z+2.5), 0.2)
-//                    .setEmission(new Color(100,100,105))
-//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
-//            geometries.add(new Sphere(new Point(x+6.5, y+h, z+2.5), 0.2)
-//                    .setEmission(new Color(100,100,105))
-//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
-//            geometries.add(new Sphere(new Point(x-6.5, y+h, z-4.5), 0.2)
-//                    .setEmission(new Color(100,100,105))
-//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
-//            geometries.add(new Sphere(new Point(x+6.5, y+h, z-4.5), 0.2)
-//                    .setEmission(new Color(100,100,105))
-//                    .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(50)));
-//        }
-//
-//        // Bench facing road
-//        geometries.add(new Polygon(
-//                new Point(x-4, y+1.8, z-3), new Point(x+4, y+1.8, z-3),
-//                new Point(x+4, y+2.2, z-2), new Point(x-4, y+2.2, z-2))
-//                .setEmission(new Color(80,60,40))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
-//        // Backrest toward shelter
-//        geometries.add(new Polygon(
-//                new Point(x-4, y+2.2, z-3.2), new Point(x+4, y+2.2, z-3.2),
-//                new Point(x+4, y+3.8, z-3),    new Point(x-4, y+3.8, z-3))
-//                .setEmission(new Color(85,65,45))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
-//
-//        // Bench legs
-//        for (double lx : new double[]{x-3, x+3}) {
-//            for (double lh = 0.4; lh <= 1.6; lh += 0.4) {
-//                geometries.add(new Sphere(new Point(lx, y+lh, z-2.8), 0.15)
-//                        .setEmission(new Color(60,60,65))
-//                        .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-//            }
-//        }
-//
-//        // Sign pole
-//        for (double h = 0.5; h <= 8.5; h += 0.25) {
-//            geometries.add(new Sphere(new Point(x+9, y+h, z), 0.15)
-//                    .setEmission(new Color(40,40,45))
-//                    .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60)));
-//        }
-//        // Yellow sign
-//        geometries.add(new Polygon(
-//                new Point(x+8.5, y+8.5, z-1.5), new Point(x+11.5, y+8.5, z-1.5),
-//                new Point(x+11.5, y+10,   z-1.5), new Point(x+8.5, y+10,   z-1.5))
-//                .setEmission(new Color(255,220,0))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(20)));
-//        // Black circle
-//        geometries.add(new Sphere(new Point(x+10, y+9.25, z-1.4), 0.4)
-//                .setEmission(new Color(20,20,20))
-//                .setMaterial(new Material().setKD(0.9).setKS(0.1).setShininess(10)));
-//
-//        // Trash bin
-//        geometries.add(new Sphere(new Point(x+5, y+1.5, z-4), 0.8)
-//                .setEmission(new Color(60,80,60))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
-//        geometries.add(new Sphere(new Point(x+5, y+2.5, z-4), 0.9)
-//                .setEmission(new Color(50,70,50))
-//                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(25)));
-//
-//        // Info board
-//        geometries.add(new Polygon(
-//                new Point(x-2, y+3,   z-4.8), new Point(x+2, y+3,   z-4.8),
-//                new Point(x+2, y+5.5, z-4.8), new Point(x-2, y+5.5, z-4.8))
-//                .setEmission(new Color(200,200,205))
-//                .setMaterial(new Material().setKD(0.7).setKS(0.3).setKR(0.1).setShininess(50)));
-//        // Glass panel
-//        geometries.add(new Polygon(
-//                new Point(x-1.8, y+3.2, z-4.7), new Point(x+1.8, y+3.2, z-4.7),
-//                new Point(x+1.8, y+5.3, z-4.7), new Point(x-1.8, y+5.3, z-4.7))
-//                .setEmission(new Color(220,230,240))
-//                .setMaterial(new Material().setKD(0.1).setKS(0.9).setKT(0.8).setShininess(100)));
-//    }

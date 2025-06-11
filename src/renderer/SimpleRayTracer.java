@@ -97,43 +97,40 @@ public class SimpleRayTracer extends RayTracerBase {
                                  Vector l,
                                  Vector n,
                                  double nl) {
-        // avoid self-intersection
+        // 1. offset the start point to avoid self‐intersection
         Vector bias = n.scale(nl < 0 ? EPS : -EPS);
         Point  p0   = ip.point.add(bias);
 
-        // soft shadows: area light sampling (uses jitter method)
+        // 2. soft shadows: area light sampling
         if (light instanceof PointLight pl && pl.getNumSamples() > 1) {
-            int     samples   = pl.getNumSamples();         // e.g. 81, 300, etc.
+            int     samples   = pl.getNumSamples();
             double  lightDist = light.getDistance(ip.point);
-            Double3 sumK = Double3.ZERO;
+            Double3 sumK      = Double3.ZERO;
             for (int i = 0; i < samples; i++) {
                 Point samplePos  = pl.getSamplePoint(ip.point);
                 Vector dirSample = samplePos.subtract(p0).normalize();
-                double  maxDist  = p0.distance(samplePos);    // ← correct per‐sample threshold
-                Ray     shadow   = new Ray(p0, dirSample);
-                List<Intersection> hits =
-                        scene.getGeometries().calculateIntersections(shadow);
+                double maxDist   = p0.distance(samplePos);
+                Ray    shadow    = new Ray(p0, dirSample);
+                List<Intersection> hits = scene.getGeometries().calculateIntersections(shadow);
                 boolean blocked = hits != null &&
-                        hits.stream().anyMatch(inter ->
-                                p0.distance(inter.point) < maxDist
-                        );
+                        hits.stream().anyMatch(inter -> p0.distance(inter.point) < maxDist);
                 sumK = sumK.add(blocked ? Double3.ZERO : Double3.ONE);
             }
             return sumK.scale(1.0 / samples);
         }
 
-
-        // hard shadows: single shadow ray toward light
-        Ray shadowRay = new Ray(p0, l);
-        List<Intersection> blockers =
-                scene.getGeometries().calculateIntersections(shadowRay);
+        // 3. hard shadows: single shadow ray toward the light
+        double  lightDist = light.getDistance(ip.point);
+        Ray     shadowRay = new Ray(p0, l.scale(-1));             // ← invert here
+        List<Intersection> blockers = scene.getGeometries().calculateIntersections(shadowRay);
         if (blockers != null &&
-                blockers.stream()
-                        .anyMatch(i -> ip.point.distance(i.point) < light.getDistance(ip.point))) {
+                blockers.stream().anyMatch(i -> p0.distance(i.point) < lightDist)) {
             return Double3.ZERO;
         }
         return Double3.ONE;
     }
+
+
 
     private Color calcGlobalEffects(Intersection ip, Ray ray, int level, Double3 kAcc) {
         Material m      = ip.geometry.getMaterial();
