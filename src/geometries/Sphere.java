@@ -1,3 +1,4 @@
+// src/geometries/Sphere.java
 package geometries;
 
 import primitives.Point;
@@ -11,7 +12,8 @@ import static primitives.Util.alignZero;
 
 /**
  * {@code Sphere} represents a sphere defined by a center point and radius.
- * Extends {@link RadialGeometry} to inherit radius property and surface normal behavior.
+ * Inherits radius and material from RadialGeometry, and participates in
+ * the NVI pattern defined by Intersectable to enable AABB culling.
  */
 public class Sphere extends RadialGeometry {
     /** The center point of the sphere in 3D space. */
@@ -22,7 +24,7 @@ public class Sphere extends RadialGeometry {
      *
      * @param center the center point of the sphere; must not be null
      * @param radius the radius of the sphere; must be positive
-     * @throws IllegalArgumentException if radius &le; 0 or center is null
+     * @throws IllegalArgumentException if radius ≤ 0 or center is null
      */
     public Sphere(Point center, double radius) {
         super(radius);
@@ -45,6 +47,25 @@ public class Sphere extends RadialGeometry {
     }
 
     /**
+     * Compute this sphere’s axis‐aligned bounding box for cheap rejection.
+     */
+    @Override
+    protected BoundingBox computeBoundingBox() {
+        double r = radius;  // inherited from RadialGeometry
+        Point min = new Point(
+                center.getX() - r,
+                center.getY() - r,
+                center.getZ() - r
+        );
+        Point max = new Point(
+                center.getX() + r,
+                center.getY() + r,
+                center.getZ() + r
+        );
+        return new BoundingBox(min, max);
+    }
+
+    /**
      * Computes the normal vector at a given point on the sphere's surface.
      * The point must lie on the sphere within a small epsilon tolerance.
      *
@@ -56,21 +77,19 @@ public class Sphere extends RadialGeometry {
     public Vector getNormal(Point point) {
         double dist = point.distance(center);
         double diff = Math.abs(dist - radius);
-        // allow small floating‐point error up to EPS
         final double EPS = 1e-6;
         if (diff > EPS) {
             throw new IllegalArgumentException(
                     String.format("Point %s is not on the sphere surface (|dist−r|=%.3e > %.3e)",
                             point, diff, EPS));
         }
-        // normal is (point - center) normalized
         return point.subtract(center).normalize();
     }
 
     /**
-     * Returns a string representation of the sphere.
+     * String representation of the sphere.
      *
-     * @return a string in the form {@code Sphere{center, r=radius}}
+     * @return "Sphere{center, r=radius}"
      */
     @Override
     public String toString() {
@@ -79,10 +98,11 @@ public class Sphere extends RadialGeometry {
 
     /**
      * Internal helper for calculating all ray–sphere intersections.
-     * Implements the NVI pattern: public methods call this helper.
+     * The public NVI method in Intersectable will have already done
+     * the AABB test, so here we only compute the exact hits.
      *
      * @param ray the ray to intersect with this sphere
-     * @return a list of {@link Intersectable.Intersection} or null if none
+     * @return a list of Intersection records or null if none
      */
     @Override
     protected List<Intersectable.Intersection> calculateIntersectionsHelper(Ray ray) {
@@ -98,7 +118,11 @@ public class Sphere extends RadialGeometry {
             return List.of(
                     new Intersectable.Intersection(
                             this,
-                            ray.getPoint(radius)
+                            ray.getPoint(radius),
+                            getMaterial(),
+                            ray,
+                            getNormal(ray.getPoint(radius)),
+                            null
                     )
             );
         }
@@ -106,7 +130,6 @@ public class Sphere extends RadialGeometry {
         double tm = alignZero(v.dotProduct(u));
         double d2 = alignZero(u.lengthSquared() - tm * tm);
         double r2 = radius * radius;
-        // no intersections if ray misses or just grazes
         if (d2 >= r2) {
             return null;
         }
@@ -116,7 +139,7 @@ public class Sphere extends RadialGeometry {
         double t2 = alignZero(tm + th);
 
         List<Intersectable.Intersection> intersections = new LinkedList<>();
-        // add intersection at t1 if in front of ray origin
+
         if (t1 > 0) {
             Point p1 = ray.getPoint(t1);
             Vector n1 = p1.subtract(center).normalize();
@@ -127,11 +150,10 @@ public class Sphere extends RadialGeometry {
                             getMaterial(),
                             ray,
                             n1,
-                            null // light source placeholder
+                            null
                     )
             );
         }
-        // add intersection at t2 if in front of ray origin
         if (t2 > 0) {
             Point p2 = ray.getPoint(t2);
             Vector n2 = p2.subtract(center).normalize();

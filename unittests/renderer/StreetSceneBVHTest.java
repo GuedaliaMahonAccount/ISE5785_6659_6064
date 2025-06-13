@@ -166,7 +166,7 @@ public class StreetSceneBVHTest {
         scene.lights.add(
                 new PointLight(new Color(90, 85, 65), new Point(50, 120, -250))
                         .setKl(0.00001).setKq(0.000005)
-                        .setRadius(10.0).setNumSamples(1)
+                        .setRadius(10.0).setNumSamples(5)
         );
 
         // Additional moonlight to illuminate the ground below
@@ -183,12 +183,12 @@ public class StreetSceneBVHTest {
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(-50, 8 + 1.2, zLeft))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(10.0).setNumSamples(1)
+                            .setRadius(10.0).setNumSamples(5)
             );
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(55, 8 + 1.2, zRight))
                             .setKl(0.001).setKq(0.0005)
-                            .setRadius(10.0).setNumSamples(1)
+                            .setRadius(10.0).setNumSamples(5)
             );
         }
 
@@ -196,17 +196,17 @@ public class StreetSceneBVHTest {
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(1)
+                        .setRadius(1.5).setNumSamples(5)
         );
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-80, 60, -350))
                         .setKl(0.0003).setKq(0.00015)
-                        .setRadius(1.5).setNumSamples(1)
+                        .setRadius(1.5).setNumSamples(5)
         );
         scene.lights.add(
                 new PointLight(new Color(120, 110, 100), new Point(35, 6, 20))
                         .setKl(0.0005).setKq(0.0003)
-                        .setRadius(1.0).setNumSamples(1)
+                        .setRadius(1.0).setNumSamples(5)
         );
 
         // ===== Camera Setup with Multithreading, Logging & AA =====
@@ -221,7 +221,7 @@ public class StreetSceneBVHTest {
                 .build();
         // Enable sampling
         camera.setSamplingConfig(new SamplingConfig(
-                1, TargetShape.RECTANGLE, SamplingPattern.GRID
+                5, TargetShape.RECTANGLE, SamplingPattern.GRID
         ));
 
         System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
@@ -251,83 +251,53 @@ public class StreetSceneBVHTest {
     private void createStreetLamp(List<Intersectable> geometries, Point pos) {
         double x = pos.getX(), y = pos.getY(), z = pos.getZ();
 
-        // ===== Base =====
-        // Radius of the base sphere
-        double baseRadius = 0.8;
-        // Compute the Y-coordinate so the sphere just touches the ground at y
-        double baseCenterY = y + baseRadius;
-        geometries.add(
-                new Sphere(new Point(x, baseCenterY, z), baseRadius)
-                        .setEmission(new Color(40, 40, 45))
-                        .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40))
-        );
+        // Base - lower the center to be more embedded in the sidewalk
+        // Center at y-0.3 with radius 0.8 makes the base appear embedded in the ground
+        geometries.add(new Sphere(new Point(x, y - 0.3, z), 0.8)
+                .setEmission(new Color(40,40,45))
+                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
 
-        // ===== Vertical Pole =====
-        double poleRadius = 0.35;
-        // Stack spheres from baseCenterY + 1.0 up to +7.0 in 0.4 increments
-        for (double h = 1.0; h <= 7.0; h += 0.4) {
-            geometries.add(
-                    new Sphere(new Point(x, baseCenterY + h, z), poleRadius)
-                            .setEmission(new Color(30, 30, 35))
-                            .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60))
-            );
+        // Add a flat disc at sidewalk level for better grounding effect
+        geometries.add(new Polygon(
+                new Point(x - 0.8, y + 0.01, z + 0.8),
+                new Point(x + 0.8, y + 0.01, z + 0.8),
+                new Point(x + 0.8, y + 0.01, z - 0.8),
+                new Point(x - 0.8, y + 0.01, z - 0.8))
+                .setEmission(new Color(35,35,40))
+                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
+
+        // Vertical pole - start slightly lower to connect cleanly with embedded base
+        for (double h = 0.5; h <= 7.0; h += 0.4) {
+            geometries.add(new Sphere(new Point(x, y + h, z), 0.35)
+                    .setEmission(new Color(30,30,35))
+                    .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60)));
         }
 
-        // ===== Horizontal Arm =====
-        // Determine direction: if lamp is on the left side (x<0), arm points +X; otherwise -X
+        // Rest of the lamp components remain unchanged
         double dir = x < 0 ? +1.0 : -1.0;
-        double armHeightY = baseCenterY + 7.0;   // same height as the top of the pole
-        double armRadius  = 0.28;
-        // Extend the arm in 0.4-unit steps from 0.4 to 2.4 along X
         for (double off = 0.4; off <= 2.4; off += 0.4) {
-            geometries.add(
-                    new Sphere(
-                            new Point(x + dir * off, armHeightY, z),
-                            armRadius
-                    )
-                            .setEmission(new Color(30, 30, 35))
-                            .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60))
-            );
+            geometries.add(new Sphere(new Point(x + dir * off, y + 7, z), 0.28)
+                    .setEmission(new Color(30,30,35))
+                    .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60)));
         }
 
-        // ===== Bracket =====
-        // Two small spheres just below the arm to form the bracket
-        geometries.add(
-                new Sphere(
-                        new Point(x + dir * 2.4, baseCenterY + 6.8, z),
-                        0.25
-                )
-                        .setEmission(new Color(40, 40, 45))
-                        .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40))
-        );
-        geometries.add(
-                new Sphere(
-                        new Point(x + dir * 2.4, baseCenterY + 6.5, z),
-                        0.25
-                )
-                        .setEmission(new Color(40, 40, 45))
-                        .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40))
-        );
+        // Bracket
+        geometries.add(new Sphere(new Point(x + dir * 2.4, y + 6.8, z), 0.25)
+                .setEmission(new Color(40,40,45))
+                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
+        geometries.add(new Sphere(new Point(x + dir * 2.4, y + 6.5, z), 0.25)
+                .setEmission(new Color(40,40,45))
+                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
 
-        // ===== Lamp Housing =====
-        geometries.add(
-                new Sphere(
-                        new Point(x + dir * 2.4, baseCenterY + 6.0, z),
-                        1.1
-                )
-                        .setEmission(new Color(25, 25, 30))
-                        .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30))
-        );
+        // Lamp housing
+        geometries.add(new Sphere(new Point(x + dir * 2.4, y + 6.0, z), 1.1)
+                .setEmission(new Color(25,25,30))
+                .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
 
-        // ===== Light Bulb =====
-        geometries.add(
-                new Sphere(
-                        new Point(x + dir * 2.4, baseCenterY + 6.0, z),
-                        1.5
-                )
-                        .setEmission(new Color(255, 230, 180))
-                        .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(10))
-        );
+        // Light sphere
+        geometries.add(new Sphere(new Point(x + dir * 2.4, y + 6.0, z), 1.5)
+                .setEmission(new Color(255,230,180))
+                .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(10)));
     }
 
 

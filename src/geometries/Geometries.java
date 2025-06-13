@@ -1,85 +1,54 @@
+// src/geometries/Geometries.java
 package geometries;
 
 import primitives.Ray;
 
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A composite of multiple Intersectable geometries.
- * <p>
- * Aggregates a collection of geometries and computes all intersection points
- * between a given ray and the contained geometries.
- * </p>
+ * Composite of multiple Intersectable objects.
+ * Also participates in the NVI pattern, so you get one big AABB,
+ * with children thrown out early on a per-child basis.
  */
 public class Geometries extends Intersectable {
-    /**
-     * The internal list of geometries making up this group.
-     */
-    private final List<Intersectable> geometries;
 
-    /**
-     * Creates an empty Geometries collection. Additional geometries can be added later.
-     */
-    public Geometries() {
-        this.geometries = new LinkedList<>();
+    private final List<Intersectable> children = new ArrayList<>();
+
+    /** Build a composite out of zero or more Intersectables */
+    public Geometries(Intersectable... elems) {
+        for (var e : elems) {
+            if (e != null) children.add(e);
+        }
     }
 
-    /**
-     * Constructs a Geometries group containing the given intersectable geometries.
-     *
-     * @param geometries one or more Intersectable objects to include in this group
-     */
-    public Geometries(Intersectable... geometries) {
-        this.geometries = new LinkedList<>(Arrays.asList(geometries));
+    /** Add more shapes to this grouping */
+    public void add(Intersectable... elems) {
+        for (var e : elems) {
+            if (e != null) children.add(e);
+        }
     }
 
-    /**
-     * Adds one or more geometries to this group.
-     *
-     * @param geometries one or more Intersectable objects to add
-     */
-    public void add(Intersectable... geometries) {
-        this.geometries.addAll(Arrays.asList(geometries));
+    /** Expose the raw list if you need it elsewhere (e.g. BVH builder) */
+    public List<Intersectable> getChildren() {
+        return children;
     }
 
-    /**
-     * Calculates all intersection points between the provided ray and
-     * each geometry in this collection.
-     *
-     * @param ray the ray to test for intersections
-     * @return a list of Intersection objects, or null if there are no intersections
-     */
+    @Override
+    protected BoundingBox computeBoundingBox() {
+        return BoundingBox.unionOf(children);
+    }
+
     @Override
     protected List<Intersection> calculateIntersectionsHelper(Ray ray) {
-        List<Intersection> result = new LinkedList<>();
-        for (Intersectable geo : geometries) {
-            List<Intersection> hits = geo.calculateIntersections(ray);
+        List<Intersection> result = null;
+        for (Intersectable g : children) {
+            var hits = g.calculateIntersections(ray);
             if (hits != null) {
+                if (result == null) result = new ArrayList<>();
                 result.addAll(hits);
             }
         }
-        return result.isEmpty() ? null : result;
-    }
-
-    /**
-     * Checks whether this Geometries group contains any geometries.
-     *
-     * @return true if the group is empty, false otherwise
-     */
-    public boolean isEmpty() {
-        return geometries.isEmpty();
-    }
-
-    /**
-     * Returns a string representation of this group,
-     * listing all contained geometries.
-     *
-     * @return a descriptive string of this Geometries group
-     */
-    @Override
-    public String toString() {
-        return "Geometries" + geometries;
+        return result;
     }
 }
