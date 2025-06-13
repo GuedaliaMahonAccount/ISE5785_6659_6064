@@ -82,6 +82,10 @@ public abstract class Intersectable {
                 .toList();
     }
 
+    public boolean isEmpty() {
+        return bbox.isEmpty();
+    }
+
     /**
      * A full record of one ray–geometry intersection, including
      * material, normal, dot-product, and an optional LightSource.

@@ -59,4 +59,10 @@ public class BoundingBox {
 
         return true;
     }
+
+    public boolean isEmpty() {
+        return min.getX() > max.getX() ||
+               min.getY() > max.getY() ||
+               min.getZ() > max.getZ();
+    }
 }
