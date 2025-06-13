@@ -21,7 +21,7 @@ import java.util.List;
  * The camera is placed closer to capture more detail. The shopping mall building is moved off
  * the road and set to non-reflective.
  */
-public class StreetSceneTest {
+public class StreetSceneBVHTest {
 
     private final Scene scene = new Scene("Colorful Realistic Street Scene with Crescent Moon");
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
