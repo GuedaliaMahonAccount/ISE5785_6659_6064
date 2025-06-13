@@ -15,9 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Test class for rendering a colorful, realistic street scene with BVH acceleration.
+ * Test class for rendering a colorful, realistic street scene with BVH acceleration,
+ * without multithreading.
  */
-public class StreetSceneBVHTest {
+public class StreetSceneNoThreadsTest {
 
     private final Scene scene = new Scene("Colorful Realistic Street Scene with Crescent Moon");
     private final Camera.Builder cameraBuilder = Camera.getBuilder()
@@ -147,10 +148,9 @@ public class StreetSceneBVHTest {
         scene.setAmbientLight(new AmbientLight(new Color(15, 15, 20)));
         scene.lights.add(new DirectionalLight(new Color(60, 50, 40), new Vector(0.4, -0.6, -0.7)));
         scene.lights.add(new DirectionalLight(new Color(20, 25, 30), new Vector(-0.2, -0.3, 0.5)));
-
         scene.lights.add(
                 new PointLight(new Color(90, 85, 65), new Point(50, 120, -250))
-                        .setKl(0.00001).setKq(0.000005).setRadius(10.0).setNumSamples(1)
+                        .setKl(0.00001).setKq(0.000005).setRadius(10.0).setNumSamples(3)
         );
         scene.lights.add(
                 new SpotLight(new Color(70, 65, 50), new Point(50, 120, -250), new Vector(0.1, -1, 0.3))
@@ -161,39 +161,39 @@ public class StreetSceneBVHTest {
             double zRight = zLeft + 25;
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(-50, 9.2, zLeft))
-                            .setKl(0.001).setKq(0.0005).setRadius(10.0).setNumSamples(1)
+                            .setKl(0.001).setKq(0.0005).setRadius(10.0).setNumSamples(3)
             );
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(55, 9.2, zRight))
-                            .setKl(0.001).setKq(0.0005).setRadius(10.0).setNumSamples(1)
+                            .setKl(0.001).setKq(0.0005).setRadius(10.0).setNumSamples(3)
             );
         }
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
-                        .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(1)
+                        .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(3)
         );
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-80, 60, -350))
-                        .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(1)
+                        .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(3)
         );
         scene.lights.add(
                 new PointLight(new Color(120, 110, 100), new Point(35, 6, 20))
-                        .setKl(0.0005).setKq(0.0003).setRadius(1.0).setNumSamples(1)
+                        .setKl(0.0005).setKq(0.0003).setRadius(1.0).setNumSamples(3)
         );
 
-        // ===== Camera Setup with AA =====
+        // ===== Camera Setup without Threads =====
         Camera camera = cameraBuilder
                 .setLocation(new Point(-15, 12, 60))
                 .setDirection(new Vector(0.1, -0.15, -1), new Vector(0, 1, 0))
                 .setVpDistance(150)
                 .setVpSize(300, 200)
                 .setResolution(1500, 1000)
-                .setMultithreading(-2)
                 .setDebugPrint(1.0)
                 .build();
 
+        // Enable sampling
         camera.setSamplingConfig(new SamplingConfig(
-                1, TargetShape.RECTANGLE, SamplingPattern.GRID
+                3, TargetShape.RECTANGLE, SamplingPattern.GRID
         ));
 
         System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
@@ -202,34 +202,17 @@ public class StreetSceneBVHTest {
         long tEnd   = System.currentTimeMillis();
         System.out.printf("Render completed in %.3f seconds.%n", (tEnd - tStart) / 1000.0);
 
-        camera.writeToImage("streetBVH");
-        System.out.println("Image written to file: streetBVH.png");
+        camera.writeToImage("streetNoThreads");
+        System.out.println("Image written to file: streetNoThreads.png");
     }
 
-
-    /**
-     * Creates a street lamp at the specified position.
-     * The lamp consists of:
-     *  - a spherical base that sits flush with the ground,
-     *  - a vertical pole made of stacked spheres,
-     *  - a horizontal arm pointing toward the road center,
-     *  - a bracket supporting the lamp housing,
-     *  - the lamp housing itself,
-     *  - and the glowing light sphere.
-     *
-     * @param geometries the list to which all lamp parts will be added
-     * @param pos        the (x,y,z) base position on the sidewalk
-     */
     private void createStreetLamp(List<Intersectable> geometries, Point pos) {
         double x = pos.getX(), y = pos.getY(), z = pos.getZ();
 
-        // Base - lower the center to be more embedded in the sidewalk
-        // Center at y-0.3 with radius 0.8 makes the base appear embedded in the ground
+        // Base
         geometries.add(new Sphere(new Point(x, y - 0.3, z), 0.8)
                 .setEmission(new Color(40,40,45))
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-
-        // Add a flat disc at sidewalk level for better grounding effect
         geometries.add(new Polygon(
                 new Point(x - 0.8, y + 0.01, z + 0.8),
                 new Point(x + 0.8, y + 0.01, z + 0.8),
@@ -238,14 +221,13 @@ public class StreetSceneBVHTest {
                 .setEmission(new Color(35,35,40))
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
 
-        // Vertical pole - start slightly lower to connect cleanly with embedded base
+        // Pole
         for (double h = 0.5; h <= 7.0; h += 0.4) {
             geometries.add(new Sphere(new Point(x, y + h, z), 0.35)
                     .setEmission(new Color(30,30,35))
                     .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60)));
         }
 
-        // Rest of the lamp components remain unchanged
         double dir = x < 0 ? +1.0 : -1.0;
         for (double off = 0.4; off <= 2.4; off += 0.4) {
             geometries.add(new Sphere(new Point(x + dir * off, y + 7, z), 0.28)
@@ -253,15 +235,13 @@ public class StreetSceneBVHTest {
                     .setMaterial(new Material().setKD(0.6).setKS(0.4).setShininess(60)));
         }
 
-        // Bracket
+        // Bracket and housing
         geometries.add(new Sphere(new Point(x + dir * 2.4, y + 6.8, z), 0.25)
                 .setEmission(new Color(40,40,45))
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
         geometries.add(new Sphere(new Point(x + dir * 2.4, y + 6.5, z), 0.25)
                 .setEmission(new Color(40,40,45))
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(40)));
-
-        // Lamp housing
         geometries.add(new Sphere(new Point(x + dir * 2.4, y + 6.0, z), 1.1)
                 .setEmission(new Color(25,25,30))
                 .setMaterial(new Material().setKD(0.8).setKS(0.2).setShininess(30)));
@@ -272,16 +252,10 @@ public class StreetSceneBVHTest {
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(10)));
     }
 
-
-    /**
-     * Creates a tree at the specified position with a given scale.
-     * The tree consists of multiple spheres representing the trunk and foliage.
-     * Adjusted for proper positioning on sidewalks.
-     */
     private void createTree(List<Intersectable> geometries, Point pos, double scale) {
         double x = pos.getX(), y = pos.getY(), z = pos.getZ();
 
-        // Trunk - positioned to start from the sidewalk level
+        // Trunk
         geometries.add(new Sphere(new Point(x, y + 0.8 * scale, z), 1.5 * scale)
                 .setEmission(new Color(80,50,30)).setMaterial(new Material().setKD(0.8).setKS(0.1).setShininess(15)));
         geometries.add(new Sphere(new Point(x, y + 2.5 * scale, z), 1.2 * scale)
@@ -298,10 +272,6 @@ public class StreetSceneBVHTest {
                 .setEmission(new Color(40,120,50)).setMaterial(new Material().setKD(0.7).setKS(0.3).setShininess(25)));
     }
 
-    /**
-     * Creates a building without windows at the specified position.
-     * The building consists of six polygon faces with different colors.
-     */
     private void createBuildingNoWindows(List<Intersectable> geometries,
                                          Point pos,
                                          double width, double height, double depth,
@@ -349,11 +319,6 @@ public class StreetSceneBVHTest {
                 .setMaterial(new Material().setKD(0.7).setKS(0.3).setKR(0.1).setShininess(40)));
     }
 
-    /**
-     * Creates a non-reflective building at the specified position.
-     * The building consists of six polygon faces with different colors,
-     * and does not have reflective properties.
-     */
     private void createNonReflectiveBuilding(List<Intersectable> geometries,
                                              Point pos,
                                              Color color) {

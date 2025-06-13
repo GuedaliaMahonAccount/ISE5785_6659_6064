@@ -1,4 +1,3 @@
-// src/geometries/Intersectable.java
 package geometries;
 
 import lighting.LightSource;
@@ -16,10 +15,11 @@ import java.util.List;
  */
 public abstract class Intersectable {
 
-    private final BoundingBox bbox;
+    // Bounding box is computed lazily after subclass initialization
+    private BoundingBox bbox;
 
     protected Intersectable() {
-        this.bbox = computeBoundingBox();
+        // delay compute until after subclass fields are initialized
     }
 
     /**
@@ -27,20 +27,27 @@ public abstract class Intersectable {
      */
     protected abstract BoundingBox computeBoundingBox();
 
-    /** @return the precomputed bounding box for this shape */
-    public BoundingBox getBoundingBox() {
+    /**
+     * @return the lazily computed bounding box for this shape, or null if none
+     */
+    public final BoundingBox getBoundingBox() {
+        if (bbox == null) {
+            bbox = computeBoundingBox();
+        }
         return bbox;
     }
 
     /**
-     * Public entry point: test the ray against the AABB first, then
-     * call the subclass’s intersection code only if the box hit succeeds.
+     * Public entry point: test the ray against the AABB first (if present), then
+     * call the subclass’s intersection code.
      *
      * @param ray the ray to intersect
      * @return list of detailed Intersection records, or null if none
      */
     public final List<Intersection> calculateIntersections(Ray ray) {
-        if (!bbox.intersects(ray)) {
+        BoundingBox b = getBoundingBox();
+        // if there's a bounding box and the ray misses it, cull early
+        if (b != null && !b.intersects(ray)) {
             return null;
         }
         return calculateIntersectionsHelper(ray);
@@ -82,8 +89,12 @@ public abstract class Intersectable {
                 .toList();
     }
 
+    /**
+     * @return true if this shape has no volume/boundary
+     */
     public boolean isEmpty() {
-        return bbox.isEmpty();
+        BoundingBox b = getBoundingBox();
+        return b == null || b.isEmpty();
     }
 
     /**
