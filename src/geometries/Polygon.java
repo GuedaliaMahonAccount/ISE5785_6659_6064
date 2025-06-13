@@ -17,10 +17,10 @@ import static primitives.Util.isZero;
 public class Polygon extends Geometry {
 
    /** The ordered list of vertices defining the polygon. */
-   private final List<Point> vertices;
+   public final List<Point> vertices;
 
    /** The underlying plane in which all vertices lie. */
-   private final Plane plane;
+   public final Plane plane;
 
    /** Number of vertices (>= 3). */
    private final int size;
