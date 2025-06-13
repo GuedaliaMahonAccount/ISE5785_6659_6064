@@ -43,6 +43,35 @@ public class Cylinder extends Tube {
     }
 
     /**
+     * Compute this cylinder's axis-aligned bounding box.
+     * Unlike Tube, the cylinder has a finite length along its axis.
+     */
+    @Override
+    protected BoundingBox computeBoundingBox() {
+        Point baseCenter = getAxisRay().getP0();
+        Vector axisDir = getAxisRay().getDir().normalize();
+
+        // Calculate the top center by moving height distance along the axis
+        Point topCenter = baseCenter.add(axisDir.scale(height));
+
+        // Create a box that extends radius distance in all directions from both ends
+        double r = getRadius();
+
+        double minX = Math.min(baseCenter.getX(), topCenter.getX()) - r;
+        double minY = Math.min(baseCenter.getY(), topCenter.getY()) - r;
+        double minZ = Math.min(baseCenter.getZ(), topCenter.getZ()) - r;
+
+        double maxX = Math.max(baseCenter.getX(), topCenter.getX()) + r;
+        double maxY = Math.max(baseCenter.getY(), topCenter.getY()) + r;
+        double maxZ = Math.max(baseCenter.getZ(), topCenter.getZ()) + r;
+
+        Point min = new Point(minX, minY, minZ);
+        Point max = new Point(maxX, maxY, maxZ);
+
+        return new BoundingBox(min, max);
+    }
+
+    /**
      * Calculates the intersections (if any) of a given ray with this cylinder,
      * including its circular end caps.
      *
@@ -94,7 +123,14 @@ public class Cylinder extends Tube {
                 for (var h : sideHits) {
                     double proj = axisDir.dotProduct(h.point.subtract(baseCenter));
                     if (proj >= 0 && proj <= height) {
-                        result.add(new Intersectable.Intersection(this, h.point));
+                        result.add(new Intersectable.Intersection(
+                                this,
+                                h.point,
+                                getMaterial(),
+                                ray,
+                                getNormal(h.point),
+                                null
+                        ));
                     }
                 }
             }
@@ -123,10 +159,48 @@ public class Cylinder extends Tube {
         if (hits != null) {
             for (var h : hits) {
                 if (h.point.subtract(capCenter).lengthSquared() <= radiusSq) {
-                    result.add(new Intersectable.Intersection(this, h.point));
+                    result.add(new Intersectable.Intersection(
+                            this,
+                            h.point,
+                            getMaterial(),
+                            ray,
+                            getNormal(h.point),
+                            null
+                    ));
                 }
             }
         }
+    }
+
+    /**
+     * Returns the normal vector at a given point on the cylinder surface.
+     * For points on the caps, returns the cap normal; otherwise delegates to Tube.
+     *
+     * @param point a point on the cylinder surface
+     * @return normalized normal vector at that point
+     */
+    @Override
+    public Vector getNormal(Point point) {
+        Point baseCenter = getAxisRay().getP0();
+        Vector axisDir = getAxisRay().getDir();
+
+        // Check if point is on bottom cap (projection = 0)
+        double projection = axisDir.dotProduct(point.subtract(baseCenter));
+        if (Math.abs(projection) < 1e-10 &&
+                point.subtract(baseCenter).lengthSquared() <= getRadius() * getRadius()) {
+            return axisDir.scale(-1); // Bottom cap normal points down
+        }
+
+        // Check if point is on top cap (projection = height)
+        if (Math.abs(projection - height) < 1e-10) {
+            Point topCenter = baseCenter.add(axisDir.scale(height));
+            if (point.subtract(topCenter).lengthSquared() <= getRadius() * getRadius()) {
+                return axisDir; // Top cap normal points up
+            }
+        }
+
+        // Otherwise, use Tube's normal calculation for side
+        return super.getNormal(point);
     }
 
     /**

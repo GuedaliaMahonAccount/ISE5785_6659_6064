@@ -60,6 +60,38 @@ public class Tube extends RadialGeometry {
         return "Tube{" + axisRay + ", r=" + radius + "}";
     }
 
+
+    @Override
+    protected BoundingBox computeBoundingBox() {
+        // Since Tube is infinite, we need to create a bounded box that extends
+        // a reasonable distance along the axis and radius distance perpendicular to it
+        Point origin = axisRay.getP0();
+        Vector dir = axisRay.getDir().normalize();
+
+        // Create a large but finite extent along the axis
+        double EXTENT = 1000.0; // Adjust based on your scene scale
+
+        // Calculate extreme points along the axis
+        Point axisMin = origin.add(dir.scale(-EXTENT));
+        Point axisMax = origin.add(dir.scale(EXTENT));
+
+        // Create a box that extends radius distance in all directions perpendicular to the axis
+        double r = radius;
+
+        double minX = Math.min(axisMin.getX(), axisMax.getX()) - r;
+        double minY = Math.min(axisMin.getY(), axisMax.getY()) - r;
+        double minZ = Math.min(axisMin.getZ(), axisMax.getZ()) - r;
+
+        double maxX = Math.max(axisMin.getX(), axisMax.getX()) + r;
+        double maxY = Math.max(axisMin.getY(), axisMax.getY()) + r;
+        double maxZ = Math.max(axisMin.getZ(), axisMax.getZ()) + r;
+
+        Point min = new Point(minX, minY, minZ);
+        Point max = new Point(maxX, maxY, maxZ);
+
+        return new BoundingBox(min, max);
+    }
+
     @Override
     protected List<Intersectable.Intersection> calculateIntersectionsHelper(Ray ray) {
         Point p0 = ray.getP0();
@@ -112,10 +144,24 @@ public class Tube extends RadialGeometry {
         List<Intersectable.Intersection> result = new LinkedList<>();
 
         if (t1 > 0) {
-            result.add(new Intersectable.Intersection(this, ray.getPoint(t1)));
+            result.add(new Intersectable.Intersection(
+                    this,
+                    ray.getPoint(t1),
+                    getMaterial(),
+                    ray,
+                    getNormal(ray.getPoint(t1)),
+                    null
+            ));
         }
         if (t2 > 0) {
-            result.add(new Intersectable.Intersection(this, ray.getPoint(t2)));
+            result.add(new Intersectable.Intersection(
+                    this,
+                    ray.getPoint(t2),
+                    getMaterial(),
+                    ray,
+                    getNormal(ray.getPoint(t2)),
+                    null
+            ));
         }
 
         return result.isEmpty() ? null : result;

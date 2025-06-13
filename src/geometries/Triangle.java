@@ -23,6 +23,31 @@ public class Triangle extends Polygon {
         super(p1, p2, p3);
     }
 
+    /**
+     * Compute this triangle's axis-aligned bounding box.
+     * The box simply contains all three vertices.
+     */
+    @Override
+    protected BoundingBox computeBoundingBox() {
+        // For a triangle, we find min and max coordinates across all vertices
+        Point p1 = vertices.get(0);
+        Point p2 = vertices.get(1);
+        Point p3 = vertices.get(2);
+
+        double minX = Math.min(Math.min(p1.getX(), p2.getX()), p3.getX());
+        double minY = Math.min(Math.min(p1.getY(), p2.getY()), p3.getY());
+        double minZ = Math.min(Math.min(p1.getZ(), p2.getZ()), p3.getZ());
+
+        double maxX = Math.max(Math.max(p1.getX(), p2.getX()), p3.getX());
+        double maxY = Math.max(Math.max(p1.getY(), p2.getY()), p3.getY());
+        double maxZ = Math.max(Math.max(p1.getZ(), p2.getZ()), p3.getZ());
+
+        Point min = new Point(minX, minY, minZ);
+        Point max = new Point(maxX, maxY, maxZ);
+
+        return new BoundingBox(min, max);
+    }
+
     @Override
     public String toString() {
         return "Triangle{" + vertices + "}";
