@@ -56,6 +56,22 @@ public class Plane extends Geometry {
     }
 
     /**
+     * Returns the reference point used to define this plane.
+     * Used by unit tests.
+     */
+    public Point getQ0() {
+        return q0;
+    }
+
+    /**
+     * Returns the (constant) unit normal vector of this plane.
+     * Used by unit tests.
+     */
+    public Vector getNormal() {
+        return normal;
+    }
+
+    /**
      * Computes an (infinite) axis-aligned bounding box for the plane.
      * Since a plane is unbounded, it extends to ±∞ on all axes.
      */

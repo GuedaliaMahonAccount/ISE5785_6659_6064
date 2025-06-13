@@ -51,4 +51,8 @@ public class Geometries extends Intersectable {
         }
         return result;
     }
+
+    public boolean isEmpty() {
+        return children.isEmpty();
+    }
 }
