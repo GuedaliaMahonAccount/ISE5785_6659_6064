@@ -150,7 +150,7 @@ public class StreetSceneNoThreadsTest {
         scene.lights.add(new DirectionalLight(new Color(20, 25, 30), new Vector(-0.2, -0.3, 0.5)));
         scene.lights.add(
                 new PointLight(new Color(90, 85, 65), new Point(50, 120, -250))
-                        .setKl(0.00001).setKq(0.000005).setRadius(10.0).setNumSamples(3)
+                        .setKl(0.00001).setKq(0.000005).setRadius(10.0).setNumSamples(5)
         );
         scene.lights.add(
                 new SpotLight(new Color(70, 65, 50), new Point(50, 120, -250), new Vector(0.1, -1, 0.3))
@@ -161,24 +161,24 @@ public class StreetSceneNoThreadsTest {
             double zRight = zLeft + 25;
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(-50, 9.2, zLeft))
-                            .setKl(0.001).setKq(0.0005).setRadius(10.0).setNumSamples(3)
+                            .setKl(0.001).setKq(0.0005).setRadius(10.0).setNumSamples(5)
             );
             scene.lights.add(
                     new PointLight(new Color(100, 90, 80), new Point(55, 9.2, zRight))
-                            .setKl(0.001).setKq(0.0005).setRadius(10.0).setNumSamples(3)
+                            .setKl(0.001).setKq(0.0005).setRadius(10.0).setNumSamples(5)
             );
         }
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-150, 40, -295))
-                        .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(3)
+                        .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(5)
         );
         scene.lights.add(
                 new PointLight(new Color(80, 70, 60), new Point(-80, 60, -350))
-                        .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(3)
+                        .setKl(0.0003).setKq(0.00015).setRadius(1.5).setNumSamples(5)
         );
         scene.lights.add(
                 new PointLight(new Color(120, 110, 100), new Point(35, 6, 20))
-                        .setKl(0.0005).setKq(0.0003).setRadius(1.0).setNumSamples(3)
+                        .setKl(0.0005).setKq(0.0003).setRadius(1.0).setNumSamples(5)
         );
 
         // ===== Camera Setup without Threads =====
@@ -193,7 +193,7 @@ public class StreetSceneNoThreadsTest {
 
         // Enable sampling
         camera.setSamplingConfig(new SamplingConfig(
-                3, TargetShape.RECTANGLE, SamplingPattern.GRID
+                5, TargetShape.RECTANGLE, SamplingPattern.GRID
         ));
 
         System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());

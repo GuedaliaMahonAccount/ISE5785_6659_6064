@@ -41,29 +41,50 @@ public class BVHNode extends Intersectable {
      */
     @Override
     protected List<Intersection> calculateIntersectionsHelper(Ray ray) {
-        // Leaf: accumulate all intersections under this box
+        // If this is a leaf node, test each primitive directly.
         if (leafObjs != null) {
             List<Intersection> result = null;
             for (Intersectable o : leafObjs) {
-                var hits = o.calculateIntersections(ray);
+                List<Intersection> hits = o.calculateIntersections(ray);
                 if (hits != null) {
-                    if (result == null) result = new ArrayList<>();
+                    if (result == null) {
+                        result = new ArrayList<>();
+                    }
                     result.addAll(hits);
                 }
             }
             return result;
         }
 
-        // Internal node: traverse left then right
-        var leftHits  = left.calculateIntersections(ray);
-        var rightHits = right.calculateIntersections(ray);
+        // Otherwise this is an internal node: test each child's bounding box once,
+        // then recurse only into children whose box actually intersects the ray.
+        List<Intersection> result = null;
 
-        if (leftHits == null)  return rightHits;
-        if (rightHits == null) return leftHits;
+        // Left child
+        BoundingBox lb = left.getBoundingBox();
+        if (lb != null && lb.intersects(ray)) {
+            List<Intersection> leftHits = left.calculateIntersectionsHelper(ray);
+            if (leftHits != null) {
+                result = new ArrayList<>(leftHits);
+            }
+        }
 
-        leftHits.addAll(rightHits);
-        return leftHits;
+        // Right child
+        BoundingBox rb = right.getBoundingBox();
+        if (rb != null && rb.intersects(ray)) {
+            List<Intersection> rightHits = right.calculateIntersectionsHelper(ray);
+            if (rightHits != null) {
+                if (result == null) {
+                    result = new ArrayList<>(rightHits);
+                } else {
+                    result.addAll(rightHits);
+                }
+            }
+        }
+
+        return result;
     }
+
 
     /**
      * Build a BVH over a flat list of primitives.
