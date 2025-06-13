@@ -1,4 +1,3 @@
-// src/geometries/BVHNode.java
 package geometries;
 
 import primitives.Ray;
@@ -9,77 +8,94 @@ import java.util.Comparator;
 /** A BVHNode is itself an Intersectable, so it plugs right into your code. */
 public class BVHNode extends Intersectable {
     private final BoundingBox box;
-    private final Intersectable left, right;   // children
-    private final List<Intersectable> leafObjs; // only for leaves
+    private final Intersectable left, right;     // children (null for leaf)
+    private final List<Intersectable> leafObjs;  // non-null only for leaves
     private static final int MAX_LEAF = 4;
 
-    /** Leaf‐constructor */
+    /** Leaf‐node constructor */
     private BVHNode(List<Intersectable> objs) {
         this.leafObjs = objs;
-        this.left  = null;
-        this.right = null;
-        this.box   = BoundingBox.unionOf(objs);
+        this.left     = null;
+        this.right    = null;
+        this.box      = BoundingBox.unionOf(objs);
     }
 
     /** Internal‐node constructor */
     private BVHNode(BVHNode l, BVHNode r) {
         this.leafObjs = null;
-        this.left  = l;
-        this.right = r;
-        this.box   = BoundingBox.union(l.box, r.box);
+        this.left     = l;
+        this.right    = r;
+        this.box      = BoundingBox.union(l.box, r.box);
     }
 
+    /** Return the precomputed bounding box for this node. */
     @Override
     protected BoundingBox computeBoundingBox() {
         return box;
     }
 
+    /**
+     * NVI helper: ray already passed the AABB test, so now:
+     * – if leaf: test each object’s calculateIntersections()
+     * – else: recurse into children
+     */
     @Override
-    protected List<GeoPoint> findGeoIntersectionsInternal(Ray ray) {
-        // we know ray hits box (checked by NVI), so:
+    protected List<Intersection> calculateIntersectionsHelper(Ray ray) {
+        // Leaf: accumulate all intersections under this box
         if (leafObjs != null) {
-            List<GeoPoint> res = null;
-            for (var o : leafObjs) {
-                var pts = o.findGeoIntersections(ray);
-                if (pts != null) {
-                    if (res == null) res = new ArrayList<>();
-                    res.addAll(pts);
+            List<Intersection> result = null;
+            for (Intersectable o : leafObjs) {
+                var hits = o.calculateIntersections(ray);
+                if (hits != null) {
+                    if (result == null) result = new ArrayList<>();
+                    result.addAll(hits);
                 }
             }
-            return res;
-        } else {
-            // traverse children in whichever order:
-            List<GeoPoint> leftHits  = left.findGeoIntersections(ray);
-            List<GeoPoint> rightHits = right.findGeoIntersections(ray);
-            if (leftHits == null) return rightHits;
-            if (rightHits == null) return leftHits;
-            leftHits.addAll(rightHits);
-            return leftHits;
+            return result;
         }
+
+        // Internal node: traverse left then right
+        var leftHits  = left.calculateIntersections(ray);
+        var rightHits = right.calculateIntersections(ray);
+
+        if (leftHits == null)  return rightHits;
+        if (rightHits == null) return leftHits;
+
+        leftHits.addAll(rightHits);
+        return leftHits;
     }
 
-    /** Build a BVH over a flat list of primitives */
+    /**
+     * Build a BVH over a flat list of primitives.
+     * Splits along the longest axis at the median until leaves ≤ MAX_LEAF.
+     */
     public static BVHNode build(List<Intersectable> prims) {
-        if (prims.size() <= MAX_LEAF) return new BVHNode(prims);
-        // 1. compute bounding‐box and longest axis
+        if (prims.size() <= MAX_LEAF) {
+            return new BVHNode(prims);
+        }
+
+        // 1) find longest axis of the full set
         BoundingBox full = BoundingBox.unionOf(prims);
         double dx = full.max.getX() - full.min.getX();
         double dy = full.max.getY() - full.min.getY();
         double dz = full.max.getZ() - full.min.getZ();
-        int axis = dx>dy && dx>dz ? 0 : (dy>dz ? 1 : 2);
-        // 2. sort by centroid
+        int axis = dx > dy && dx > dz ? 0 : (dy > dz ? 1 : 2);
+
+        // 2) sort by centroid along that axis
         prims.sort(Comparator.comparingDouble(o -> {
             BoundingBox b = o.getBoundingBox();
-            return axis==0
-                    ? (b.min.getX()+b.max.getX())*0.5
-                    : axis==1
-                    ? (b.min.getY()+b.max.getY())*0.5
-                    : (b.min.getZ()+b.max.getZ())*0.5;
+            return axis == 0
+                    ? (b.min.getX() + b.max.getX()) * 0.5
+                    : axis == 1
+                    ? (b.min.getY() + b.max.getY()) * 0.5
+                    : (b.min.getZ() + b.max.getZ()) * 0.5;
         }));
-        // 3. split at median
-        int mid = prims.size()/2;
-        List<Intersectable> leftList  = new ArrayList<>(prims.subList(0, mid));
-        List<Intersectable> rightList = new ArrayList<>(prims.subList(mid, prims.size()));
+
+        // 3) split at median
+        int mid = prims.size() / 2;
+        var leftList  = new ArrayList<Intersectable>(prims.subList(0, mid));
+        var rightList = new ArrayList<Intersectable>(prims.subList(mid, prims.size()));
+
         return new BVHNode(build(leftList), build(rightList));
     }
 }
