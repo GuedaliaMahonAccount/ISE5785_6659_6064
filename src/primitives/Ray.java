@@ -1,4 +1,3 @@
-// primitives/Ray.java
 package primitives;
 
 import geometries.Intersectable.GeoPoint;
@@ -11,7 +10,7 @@ import java.util.List;
  * The {@code Ray} class represents a ray in 3D space, defined by
  * a starting point {@link #p0} and a normalized direction {@link #dir}.
  * Provides utilities for computing points along the ray and
- * finding closest intersections or geo‐points.
+ * finding closest intersections or geo-points.
  */
 public class Ray {
     /** The ray’s origin point. */
@@ -25,14 +24,14 @@ public class Ray {
      * @param dir direction vector (will be normalized)
      */
     public Ray(Point p0, Vector dir) {
-        this.p0 = p0;
+        this.p0  = p0;
         this.dir = dir.normalize();
     }
 
     /**
      * Constructs a ray whose origin is shifted by ±DELTA along the normal
-     * to avoid self‐intersection artifacts.
-     * @param head   the hit‐point
+     * to avoid self-intersection artifacts.
+     * @param head   the hit-point
      * @param dir    the (already normalized) direction
      * @param normal the surface normal at the hit point
      */
@@ -42,21 +41,8 @@ public class Ray {
         this.dir = dir.normalize();
     }
 
-    /**
-     * Returns the origin point of the ray.
-     * @return origin {@link Point}
-     */
-    public Point getP0() {
-        return p0;
-    }
-
-    /**
-     * Returns the direction vector of the ray.
-     * @return normalized {@link Vector}
-     */
-    public Vector getDir() {
-        return dir;
-    }
+    public Point getP0()  { return p0; }
+    public Vector getDir() { return dir; }
 
     @Override
     public boolean equals(Object obj) {
@@ -82,22 +68,18 @@ public class Ray {
         try {
             return p0.add(dir.scale(d));
         } catch (IllegalArgumentException e) {
-            // If scaling creates a zero vector, return the origin point
+            // scaling created a zero vector -> return origin
             return p0;
         }
     }
 
     /**
      * Finds the closest {@link GeoPoint} in the given list to this ray’s origin.
-     * @param geoPoints list of {@link GeoPoint}s
-     * @return the nearest {@link GeoPoint}, or {@code null} if none
      */
     public GeoPoint findClosestGeoPoint(List<GeoPoint> geoPoints) {
-        if (geoPoints == null || geoPoints.isEmpty()) {
-            return null;
-        }
-        GeoPoint closest = null;
-        double minDist = Double.POSITIVE_INFINITY;
+        if (geoPoints == null || geoPoints.isEmpty()) return null;
+        GeoPoint closest   = null;
+        double   minDist   = Double.POSITIVE_INFINITY;
         for (GeoPoint gp : geoPoints) {
             double d = p0.distance(gp.point);
             if (d < minDist) {
@@ -110,15 +92,11 @@ public class Ray {
 
     /**
      * Finds the closest {@link Intersection} in the given list to this ray’s origin.
-     * @param intersections list of {@link Intersection}s
-     * @return the nearest {@link Intersection}, or {@code null} if none
      */
     public Intersection findClosestIntersection(List<Intersection> intersections) {
-        if (intersections == null || intersections.isEmpty()) {
-            return null;
-        }
+        if (intersections == null || intersections.isEmpty()) return null;
         Intersection closest = null;
-        double minDist = Double.POSITIVE_INFINITY;
+        double       minDist = Double.POSITIVE_INFINITY;
         for (Intersection inter : intersections) {
             double d = p0.distance(inter.point);
             if (d < minDist) {
@@ -131,18 +109,22 @@ public class Ray {
 
     /**
      * Finds the closest {@link Point} in the given list to this ray’s origin.
-     * @param points list of {@link Point}s
-     * @return the nearest {@link Point}, or {@code null} if none
+     * @param points list of points
+     * @return the nearest point, or {@code null} if none
      */
     public Point findClosestPoint(List<Point> points) {
         if (points == null || points.isEmpty()) {
             return null;
         }
-        Intersection i = findClosestIntersection(
-                points.stream()
-                        .map(p -> new Intersection(null, p))
-                        .toList()
-        );
-        return i == null ? null : i.point;
+        Point closest      = null;
+        double minDistance = Double.POSITIVE_INFINITY;
+        for (Point p : points) {
+            double dist = p0.distance(p);
+            if (dist < minDistance) {
+                minDistance = dist;
+                closest     = p;
+            }
+        }
+        return closest;
     }
 }

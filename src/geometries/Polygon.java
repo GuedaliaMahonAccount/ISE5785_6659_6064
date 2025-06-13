@@ -1,75 +1,95 @@
 package geometries;
 
-import java.util.List;
-import static primitives.Util.*;
 import primitives.Point;
 import primitives.Ray;
 import primitives.Vector;
 
+import java.util.List;
+
+import static primitives.Util.alignZero;
+import static primitives.Util.isZero;
+
 /**
- * The {@code Polygon} class represents a convex polygon in 3D space.
- * It is defined by an ordered list of vertices lying in the same plane.
- * The constructor verifies planarity, convexity, and vertex ordering.
+ * The {@code Polygon} class represents a convex, planar polygon in 3D space.
+ * It participates in the NVI pattern by providing an AABB culling step,
+ * then delegating the detailed ray–polygon test to the helper.
  */
 public class Polygon extends Geometry {
-   /** Ordered list of polygon vertices. */
-   protected final List<Point> vertices;
-   /** Underlying plane in which the polygon lies. */
-   protected final Plane plane;
-   /** Number of vertices in the polygon. */
+
+   /** The ordered list of vertices defining the polygon. */
+   private final List<Point> vertices;
+
+   /** The underlying plane in which all vertices lie. */
+   private final Plane plane;
+
+   /** Number of vertices (>= 3). */
    private final int size;
 
    /**
-    * Constructs a convex polygon from given vertices.
-    * Validates: minimum 3 vertices, coplanarity, convexity, and consistent winding.
+    * Constructs a convex polygon from the given vertices.
+    * Validates: at least 3 vertices, coplanarity, convexity, consistent winding.
     *
-    * @param vertices list of vertices in order (clockwise or counter-clockwise)
-    * @throws IllegalArgumentException if vertices < 3, or if coplanarity/convexity conditions fail
+    * @param vertices the vertices in order (CW or CCW)
+    * @throws IllegalArgumentException on invalid input
     */
    public Polygon(Point... vertices) {
-      // Must have at least 3 points
       if (vertices.length < 3)
-         throw new IllegalArgumentException("A polygon can't have less than 3 vertices");
+         throw new IllegalArgumentException("A polygon must have at least 3 vertices");
       this.vertices = List.of(vertices);
-      size = vertices.length;
+      this.size     = vertices.length;
 
-      // Define the polygon's plane from first three vertices
-      plane = new Plane(vertices[0], vertices[1], vertices[2]);
-      // No further checks needed for triangle
+      // Build supporting plane from first three points:
+      this.plane = new Plane(vertices[0], vertices[1], vertices[2]);
+      // No further checks needed for a triangle
       if (size == 3) return;
 
-      // Compute the plane normal once
       Vector n = plane.getNormal(vertices[0]);
-      // Initialize edge vectors for winding and convexity test
+
+      // Initialize winding test using last two edges:
       Vector edge1 = vertices[size - 1].subtract(vertices[size - 2]);
       Vector edge2 = vertices[0].subtract(vertices[size - 1]);
+      boolean initialSign = edge1.crossProduct(edge2).dotProduct(n) > 0;
 
-      // Determine initial sign of cross-product dot normal
-      boolean positive = edge1.crossProduct(edge2).dotProduct(n) > 0;
-
-      // Iterate through remaining edges to validate planarity and convexity
-      for (var i = 1; i < size; ++i) {
-         // 1. Planarity: each vertex must lie in the same plane
+      // Validate coplanarity + convexity for each subsequent vertex
+      for (int i = 1; i < size; ++i) {
+         // 1) coplanarity:
          if (!isZero(vertices[i].subtract(vertices[0]).dotProduct(n)))
-            throw new IllegalArgumentException(
-                    "All vertices of a polygon must lay in the same plane");
+            throw new IllegalArgumentException("All vertices must lie in the same plane");
 
-         // Prepare next edge vectors
+         // 2) convexity & consistent winding:
          edge1 = edge2;
          edge2 = vertices[i].subtract(vertices[i - 1]);
-
-         // 2. Convexity & ordering: cross-product dot normal must have consistent sign
          boolean currentSign = edge1.crossProduct(edge2).dotProduct(n) > 0;
-         if (positive != currentSign)
-            throw new IllegalArgumentException(
-                    "All vertices must be ordered and the polygon must be convex");
+         if (initialSign != currentSign)
+            throw new IllegalArgumentException("Polygon must be convex and vertices consistently ordered");
       }
    }
 
    /**
-    * Returns the plane's normal vector (same for any point on the polygon).
-    * @param point ignored; normal is constant for the polygon's plane
-    * @return normalized normal vector of the polygon's plane
+    * Compute the axis-aligned bounding box that encloses all vertices.
+    */
+   @Override
+   protected BoundingBox computeBoundingBox() {
+      double minX = Double.POSITIVE_INFINITY, minY = Double.POSITIVE_INFINITY, minZ = Double.POSITIVE_INFINITY;
+      double maxX = Double.NEGATIVE_INFINITY, maxY = Double.NEGATIVE_INFINITY, maxZ = Double.NEGATIVE_INFINITY;
+
+      for (Point p : vertices) {
+         minX = Math.min(minX, p.getX());
+         minY = Math.min(minY, p.getY());
+         minZ = Math.min(minZ, p.getZ());
+         maxX = Math.max(maxX, p.getX());
+         maxY = Math.max(maxY, p.getY());
+         maxZ = Math.max(maxZ, p.getZ());
+      }
+
+      return new BoundingBox(
+              new Point(minX, minY, minZ),
+              new Point(maxX, maxY, maxZ)
+      );
+   }
+
+   /**
+    * The polygon’s normal is uniform; delegate to the underlying plane.
     */
    @Override
    public Vector getNormal(Point point) {
@@ -77,49 +97,51 @@ public class Polygon extends Geometry {
    }
 
    /**
-    * Calculates intersection(s) of the given ray with this polygon.
-    * Uses first plane intersection, then inside-outside test per edge.
-    *
-    * @param ray the ray to intersect
-    * @return list with one Intersection if the ray hits inside polygon; otherwise null
+    * Detailed NVI helper: (1) intersect the plane, (2) inside–outside test.
     */
    @Override
    protected List<Intersectable.Intersection> calculateIntersectionsHelper(Ray ray) {
-      // 1. Intersect ray with the bounding plane
-      List<GeoPoint> planeIntersections = plane.findGeoIntersections(ray);
-      if (planeIntersections == null) return null;
+      // 1) Ray–plane intersection
+      var planeHits = plane.findGeoIntersections(ray);
+      if (planeHits == null) return null;
 
-      // 2. Extract the single intersection point
-      Point p = planeIntersections.get(0).point;
-
-      // 3. Prepare normal for inside-outside tests
+      Point p = planeHits.get(0).point;
       Vector n = plane.getNormal(p);
 
-      // 4. Edge-by-edge inside-outside test
+      // 2) Inside–outside test against each edge:
       for (int i = 0; i < size; ++i) {
          Point vi = vertices.get(i);
          Point vj = vertices.get((i + 1) % size);
 
-         // Vector along edge and from edge start to intersection
          Vector edge = vj.subtract(vi);
-         Vector vp = p.subtract(vi);
+         Vector vp   = p.subtract(vi);
 
          Vector cross;
          try {
-            // Cross product; may throw if vectors are parallel (intersection on edge)
             cross = edge.crossProduct(vp);
-         } catch (IllegalArgumentException ignore) {
-            // Intersection exactly on edge or vertex => consider inside
+         } catch (IllegalArgumentException e) {
+            // On an edge or vertex → count as inside
             continue;
          }
 
-         // Sign of cross.dot(normal) indicates side; must be non-negative for inside
-         if (alignZero(cross.dotProduct(n)) < 0) {
-            return null; // outside
-         }
+         // If cross·n is negative → outside
+         if (alignZero(cross.dotProduct(n)) < 0)
+            return null;
       }
 
-      // 5. All tests passed; return the intersection
-      return List.of(new Intersectable.Intersection(this, p));
+      // 3) All tests passed: build full Intersection record
+      return List.of(new Intersectable.Intersection(
+              this,             // geometry
+              p,                // hit point
+              getMaterial(),    // now using the public getter
+              ray,              // incoming ray
+              n,                // normal at hit
+              null              // no specific light source
+      ));
+   }
+
+   @Override
+   public String toString() {
+      return "Polygon" + vertices;
    }
 }
