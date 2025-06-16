@@ -81,9 +81,7 @@ public class BoundingBox {
         double tzmin = (min.getZ() - ray.getP0().getZ()) / ray.getDir().getZ();
         double tzmax = (max.getZ() - ray.getP0().getZ()) / ray.getDir().getZ();
         if (tzmin > tzmax) { double tmp = tzmin; tzmin = tzmax; tzmax = tmp; }
-        if ((tmin > tzmax) || (tzmin > tmax)) return false;
-
-        return true;
+        return (!(tmin > tzmax)) && (!(tzmin > tmax));
     }
 
     /**
