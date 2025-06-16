@@ -138,8 +138,10 @@ public class StreetSceneBVHNoThreadTest {
             createStreetLamp(geometries, new Point(55, 1.2, zRight));
         }
 
-        // attach all geometries directly
-        scene.geometries.add(geometries.toArray(new Intersectable[0]));
+        // build BVH over all primitives and set it on the scene
+        BVHNode bvhRoot = BVHNode.build(geometries);
+        scene.setGeometries(bvhRoot);
+
 
         // ===== Lighting =====
         scene.setAmbientLight(new AmbientLight(new Color(15, 15, 20)));
