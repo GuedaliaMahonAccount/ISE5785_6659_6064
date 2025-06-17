@@ -203,6 +203,7 @@ public class StreetSceneThreadsTest {
 
         camera.setSamplingConfig(new SamplingConfig(5, TargetShape.RECTANGLE, SamplingPattern.GRID));
 
+
         System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
 
         long tStart = System.currentTimeMillis();
