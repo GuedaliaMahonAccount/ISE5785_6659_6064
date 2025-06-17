@@ -64,6 +64,13 @@ public class Vector extends Point {
         );
     }
 
+    /**
+     * Alias for crossProduct, so you can call v.cross(u) directly.
+     */
+    public Vector cross(Vector other) {
+        return crossProduct(other);
+    }
+
     /** Squared length */
     public double lengthSquared() {
         Double3 d = this.xyz;
@@ -81,6 +88,29 @@ public class Vector extends Point {
         if (isZero(len))
             throw new ArithmeticException("Cannot normalize zero vector");
         return scale(1.0 / len);
+    }
+
+    /**
+     * Rotate this vector around the given axis by the given angle (in radians).
+     * Uses Rodrigues' rotation formula: v_rot = v*cosθ + (k × v)*sinθ + k*(k·v)*(1−cosθ),
+     * where k is the (unit) rotation axis.
+     *
+     * @param axis  the axis to rotate around (will be normalized internally)
+     * @param angle rotation angle in radians
+     * @return new, rotated Vector
+     */
+    public Vector rotate(Vector axis, double angle) {
+        Vector k = axis.normalize();
+        Vector v = this;
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        // v * cosθ
+        Vector term1 = v.scale(cos);
+        // (k × v) * sinθ
+        Vector term2 = k.crossProduct(v).scale(sin);
+        // k * (k·v) * (1−cosθ)
+        Vector term3 = k.scale(k.dotProduct(v) * (1 - cos));
+        return term1.add(term2).add(term3);
     }
 
     @Override
